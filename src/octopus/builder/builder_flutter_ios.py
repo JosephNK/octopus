@@ -30,7 +30,7 @@ class BuilderFutterIOS(Builder):
 
         # 빌드 경로로 이동
         os.chdir(self.build_path)
-        print(f"ℹ️  Changed working directory to {os.getcwd()}")
+        print(f"ℹ️  Changed working build directory to {os.getcwd()}")
 
         # Pod install 실행
         pod_install_success = self.pod_install(path=os.getcwd())
@@ -69,7 +69,7 @@ class BuilderFutterIOS(Builder):
 
         # 원래 경로로 복원
         os.chdir(original_path)
-        print(f"ℹ️  Changed working directory to {os.getcwd()}")
+        print(f"ℹ️  Changed working original directory to {os.getcwd()}")
 
         # 빌드 완료 메시지
         print("✅ Flutter iOS build completed successfully.")
@@ -94,7 +94,7 @@ class BuilderFutterIOS(Builder):
             stdout = result.stdout
             stderr = result.stderr
             full_output = stdout + stderr
-            print(f"ℹ️  Flutter build Result:\n{full_output}")
+            print(f"{full_output}")
             print("✅ Flutter build successfully.")
             return full_output
         except subprocess.CalledProcessError as e:
@@ -135,7 +135,7 @@ class BuilderFutterIOS(Builder):
             stdout = result.stdout
             stderr = result.stderr
             full_output = stdout + stderr
-            print(f"ℹ️  Pod install Result:\n{full_output}")
+            print(f"{full_output}")
             print("✅ Pod install successfully.")
             return True
         except subprocess.CalledProcessError as e:
@@ -182,7 +182,7 @@ class BuilderFutterIOS(Builder):
             stdout = result.stdout
             stderr = result.stderr
             full_output = stdout + stderr
-            print(f"ℹ️  IPA export Result:\n{full_output}")
+            print(f"{full_output}")
             print("✅ IPA export successfully.")
 
             def get_ipa_path(log_output):
