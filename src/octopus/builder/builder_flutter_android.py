@@ -25,8 +25,12 @@ class BuilderFutterAndroid(Builder):
 
         # 빌드 경로로 이동
         os.chdir(self.build_path)
+        print(f"ℹ️  Changed working build directory to {os.getcwd()}")
+
+        # TODO: Android 빌드 명령어 실행
 
         # 원래 경로로 복원
         os.chdir(original_path)
+        print(f"ℹ️  Changed working original directory to {os.getcwd()}")
 
         print("✅ Flutter Android build completed successfully.")
