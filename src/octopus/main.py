@@ -6,7 +6,7 @@ from typing import Optional
 
 from .builder import BuilderFutterIOS, BuilderFutterAndroid
 from .git import GitManager
-from .helper import FlutterMainFinder
+from .helper import FlutterMainFinder, FlutterMelosChecker
 
 
 # Main entry point for the Octopus CI/CD tool.
@@ -71,13 +71,20 @@ def build(
         )
         git_manager.checkout_branch(
             branch_name=branch if branch else "main",
-            fresh_clone=False,
+            strategy="preserve",
         )
         git_status = git_manager.get_status()
         local_path = Path(git_status["local_path"])
         if not local_path.exists():
             print(f"❌ The specified {local_path} does not exist.")
             return
+
+        # Flutter Melos Checker Processing
+        checker = FlutterMelosChecker(local_path)
+        if checker.has_melos_config():
+            # Bootstrap 실행
+            success, message = checker.run_melos_bootstrap(verbose=True)
+            print(f"success: {success}, message: {message}")
 
         # Flutter Main Finder Processing
         finder = FlutterMainFinder(f"./{local_path}", recursive_search=True)

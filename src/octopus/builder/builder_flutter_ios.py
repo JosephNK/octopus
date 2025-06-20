@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import re
 import subprocess
 from typing import Optional
@@ -30,6 +31,13 @@ class BuilderFutterIOS(Builder):
         # 빌드 경로로 이동
         os.chdir(self.build_path)
         print(f"ℹ️  Changed working directory to {os.getcwd()}")
+
+        # Pod install 실행
+        pod_install_success = self.pod_install()
+        if pod_install_success is False:
+            raise RuntimeError(
+                "Pod install failed. Please check the output for details."
+            )
 
         # Bundle ID 가져오기
         bundle_id = self.get_bundle_id(scheme=self.flavor)
@@ -106,6 +114,29 @@ class BuilderFutterIOS(Builder):
         except Exception as e:
             print(f"❌ Extract xcarchive path failed: {e}")
             return None
+
+    def pod_install(self) -> bool:
+        """Pod install 실행"""
+        try:
+            print("ℹ️  Running pod install...")
+            cmd = ["pod", "install", "--repo-update"]
+            result = subprocess.run(
+                cmd,
+                cwd=f"{Path.cwd()}/ios",
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            stdout = result.stdout
+            stderr = result.stderr
+            full_output = stdout + stderr
+            print(f"ℹ️  Pod install Result:\n{full_output}")
+            print("✅ Pod install successfully.")
+            return True
+        except subprocess.CalledProcessError as e:
+            full_output = e.stdout + e.stderr
+            print(f"❌ Pod install failed:\n{full_output}")
+            return False
 
     def export_ipa(
         self,
