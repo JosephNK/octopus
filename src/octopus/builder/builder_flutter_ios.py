@@ -15,9 +15,10 @@ class BuilderFutterIOS(Builder):
         super().__init__(build_path, flavor)
         self.provisioning_profile = provisioning_profile
 
-    def build(self) -> None:
+    def build(self) -> str:
+        print("=" * 80)
         print(
-            f"📥 Building iOS project at {self.build_path} with flavor {self.flavor}...\n"
+            f"🚀 Building iOS project at {self.build_path} with flavor {self.flavor}..."
         )
         # 현재 작업 디렉토리 저장
         original_path = os.getcwd()
@@ -28,30 +29,44 @@ class BuilderFutterIOS(Builder):
 
         # 빌드 경로로 이동
         os.chdir(self.build_path)
+        print(f"ℹ️  Changed working directory to {os.getcwd()}")
 
         # Bundle ID 가져오기
         bundle_id = self.get_bundle_id(scheme=self.flavor)
+        if not bundle_id:
+            raise ValueError(
+                "Failed to get Bundle ID. Please check your Xcode project settings."
+            )
 
         # Flutter 빌드 명령어 실행
         output = self.build_flutter(flavor=self.flavor)
         xcarchive_path = self.extract_xcarchive_path(output)
+        if not xcarchive_path:
+            raise ValueError(
+                "Failed to extract xcarchive path from Flutter build output."
+            )
 
         # Export iPA
-        self.export_ipa(
+        export_ipa_path = self.export_ipa(
             original_path=original_path,
-            xcarchive_path=xcarchive_path,
-            workspace=f"{self.build_path}/ios/Runner.xcworkspace",
+            workspace=f"{os.getcwd()}/ios/Runner.xcworkspace",
             scheme=self.flavor,
             archive_path=xcarchive_path,
             output_directory=f"{os.path.dirname(xcarchive_path)}",
             bundle_id=bundle_id,
             provisioning_profile=self.provisioning_profile,
         )
+        if not export_ipa_path:
+            raise ValueError("Failed to export IPA file.")
 
         # 원래 경로로 복원
         os.chdir(original_path)
+        print(f"ℹ️  Changed working directory to {os.getcwd()}")
 
+        # 빌드 완료 메시지
         print("✅ Flutter iOS build completed successfully.")
+
+        return export_ipa_path
 
     def build_flutter(self, flavor: str) -> Optional[str]:
         try:
@@ -75,7 +90,8 @@ class BuilderFutterIOS(Builder):
             print("✅ Flutter build successfully.")
             return full_output
         except subprocess.CalledProcessError as e:
-            print(f"❌ Flutter build failed: {e}")
+            full_output = e.stdout + e.stderr
+            print(f"❌ Flutter build failed:\n{full_output}")
             return None
 
     def extract_xcarchive_path(self, output) -> Optional[str]:
@@ -94,23 +110,18 @@ class BuilderFutterIOS(Builder):
     def export_ipa(
         self,
         original_path: str,
-        xcarchive_path: str,
         workspace: Optional[str] = None,
         scheme: Optional[str] = None,
         archive_path: Optional[str] = None,
         output_directory: Optional[str] = None,
         bundle_id: Optional[str] = None,
         provisioning_profile: Optional[str] = None,
-    ) -> bool:
+    ) -> Optional[str]:
         """Export the xcarchive to an IPA file."""
-        if not os.path.exists(xcarchive_path):
-            raise FileNotFoundError(
-                f"The xcarchive path {xcarchive_path} does not exist."
-            )
-
         # 경로 변경
         fastlane_run_path = f"{original_path}/src"
         os.chdir(fastlane_run_path)
+        print(f"ℹ️  Changed working directory to {os.getcwd()}")
 
         # 기본 명령어
         cmd = ["fastlane", "export"]
@@ -141,11 +152,19 @@ class BuilderFutterIOS(Builder):
             full_output = stdout + stderr
             print(f"ℹ️  IPA export Result:\n{full_output}")
             print("✅ IPA export successfully.")
-            return True
+
+            def get_ipa_path(log_output):
+                """fastlane 로그에서 IPA 파일 경로 추출"""
+                pattern = r"([/\w\-_.]+\.ipa)"
+                match = re.search(pattern, log_output)
+                return match.group(1) if match else None
+
+            return get_ipa_path(full_output)
 
         except subprocess.CalledProcessError as e:
-            print(f"❌ IPA export failed: {e}")
-            return False
+            full_output = e.stdout + e.stderr
+            print(f"❌ IPA export failed:\n{full_output}")
+            return None
 
     def get_bundle_id(self, scheme: Optional[str] = None) -> Optional[str]:
         """xcodebuild로 Bundle ID 가져오기"""
@@ -156,12 +175,9 @@ class BuilderFutterIOS(Builder):
                 "-showBuildSettings",
                 "-workspace",
                 "ios/Runner.xcworkspace",
+                "-scheme",
+                scheme if scheme else "Runner",
             ]
-
-            # 파라미터 추가
-            if scheme:
-                cmd.append(f"-scheme")
-                cmd.append(f"{scheme}")
 
             result = subprocess.run(
                 cmd,
@@ -178,10 +194,11 @@ class BuilderFutterIOS(Builder):
             )
             if match:
                 bundle_id = match.group(1).strip()
-                print(f"✅ Get Bundle ID successfully.\n- {bundle_id}")
+                print(f"✅ Get Bundle ID '{bundle_id}' successfully.")
                 return bundle_id
             return None
 
         except subprocess.CalledProcessError as e:
-            print(f"❌ Get Bundle ID failed: {e}")
+            full_output = e.stdout + e.stderr
+            print(f"❌ Get Bundle ID failed:\n{full_output}")
             return None

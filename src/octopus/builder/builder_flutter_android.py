@@ -12,8 +12,9 @@ class BuilderFutterAndroid(Builder):
         super().__init__(build_path, flavor)
 
     def build(self) -> None:
+        print("=" * 80)
         print(
-            f"📥 Building Android project at {self.build_path} with flavor {self.flavor}...\n"
+            f"🚀 Building Android project at {self.build_path} with flavor {self.flavor}..."
         )
         # 현재 작업 디렉토리 저장
         original_path = os.getcwd()

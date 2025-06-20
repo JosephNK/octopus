@@ -1,10 +1,12 @@
 import argparse
-from pathlib import Path
 import re
+
+from pathlib import Path
 from typing import Optional
 
-from .git import GitManager
 from .builder import BuilderFutterIOS, BuilderFutterAndroid
+from .git import GitManager
+from .helper import FlutterMainFinder
 
 
 # Main entry point for the Octopus CI/CD tool.
@@ -15,7 +17,6 @@ def run_command() -> None:
         epilog="""""",
     )
     parser.add_argument("--run", action="store_true", help="Command to run")
-    parser.add_argument("--app-path", type=str, help="Path to the app directory")
     parser.add_argument(
         "--framework",
         type=str,
@@ -39,9 +40,8 @@ def run_command() -> None:
 
     args = parser.parse_args()
 
-    if args.app_path is not None and args.platform is not None:
+    if args.platform is not None:
         build(
-            apppath=args.app_path,
             platform=args.platform,
             framework=args.framework if args.framework else None,
             flavor=args.flavor if args.flavor else None,
@@ -55,7 +55,6 @@ def run_command() -> None:
 
 # Builds the App for the specified platform and flavor.
 def build(
-    apppath: str,
     platform: str,
     framework: Optional[str] = None,
     flavor: Optional[str] = None,
@@ -76,20 +75,37 @@ def build(
         )
         git_status = git_manager.get_status()
         local_path = Path(git_status["local_path"])
-        print(f"Local Path: {local_path}")
-        return
+        if not local_path.exists():
+            print(f"❌ The specified {local_path} does not exist.")
+            return
+
+        # Flutter Main Finder Processing
+        finder = FlutterMainFinder(f"./{local_path}", recursive_search=True)
+        finder.find_main_functions()
+        entry_points = finder.get_flutter_entry_points()
+        entry_path = (entry_points[0] if entry_points else {}).get("file", "")
+        dir_app_path = Path(f"./{local_path}/{entry_path}").parent.parent
+        if not dir_app_path.exists():
+            print(f"❌ The specified {dir_app_path} does not exist.")
+            return
+
+        # Build Processing
         if platform == "ios":
             builder = BuilderFutterIOS(
-                build_path=apppath,
+                build_path=dir_app_path,
                 flavor=flavor,
                 provisioning_profile=provisioning_profile,
             )
         elif platform == "android":
             builder = BuilderFutterAndroid(
-                build_path=apppath,
+                build_path=dir_app_path,
                 flavor=flavor,
             )
-        builder.build()
+        output_file_path = builder.build()
+        if not output_file_path:
+            print("❌ Build failed.")
+            return
+        print(f"Output file: {output_file_path}")
 
 
 if __name__ == "__main__":

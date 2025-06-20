@@ -223,6 +223,7 @@ class GitManager:
         Returns:
             bool: Success status
         """
+        print("=" * 80)
         print(f"🚀 Starting branch checkout: {branch_name}")
 
         if not fresh_clone:
@@ -365,7 +366,7 @@ class GitManager:
         if success:
             print(f"🧹 Untracked files/directories cleaned")
             if output.strip():
-                print(f"Deleted items:\n{output}")
+                print(f"Deleted items:\n{output}".strip())
             return True
         else:
             print(f"❌ Clean failed: {output}")
