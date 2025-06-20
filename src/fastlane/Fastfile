@@ -21,7 +21,7 @@ platform :ios do
     # add actions here: https://docs.fastlane.tools/actions
   end
 
-  desc "Export IPA with correct provisioning"
+  desc "Export IPA with provisioning"
   lane :export do |options| 
     gym(
       workspace: options[:workspace], 
@@ -37,19 +37,5 @@ platform :ios do
         }
       }
     )
-    # gym(
-    #   workspace: "/Users/josephnk/workspace/development/dateping-app/app/ios/Runner.xcworkspace", 
-    #   scheme: "qa",
-    #   skip_build_archive: true,
-    #   archive_path: "/Users/josephnk/workspace/development/dateping-app/app/build/ios/archive/Runner.xcarchive",
-    #   export_method: "app-store",  # app-store 유지
-    #   output_directory: "/Users/josephnk/workspace/development/dateping-app/app/build/ios/archive/ipa",
-    #   export_options: {
-    #   signingStyle: "manual",
-    #     provisioningProfiles: {
-    #       "com.aricosystems.dateping.temp" => "com.aricosystems.dateping.temp-appstore"
-    #     }
-    #   }
-    # )
   end
 end
