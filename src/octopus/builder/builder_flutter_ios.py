@@ -55,8 +55,16 @@ class BuilderFutterIOS(Builder):
 
     def build_flutter(self, flavor: str) -> Optional[str]:
         try:
+            # 기본 명령어
+            cmd = ["flutter", "build", "ipa"]
+
+            # 파라미터 추가
+            if flavor:
+                cmd.append(f"--flavor")
+                cmd.append(f"{flavor}")
+
             result = subprocess.run(
-                ["flutter", "build", "ipa", "--flavor", f"{flavor}"],
+                cmd,
                 capture_output=True,
                 text=True,
             )
@@ -142,15 +150,21 @@ class BuilderFutterIOS(Builder):
     def get_bundle_id(self, scheme: Optional[str] = None) -> Optional[str]:
         """xcodebuild로 Bundle ID 가져오기"""
         try:
+            # 기본 명령어
+            cmd = [
+                "xcodebuild",
+                "-showBuildSettings",
+                "-workspace",
+                "ios/Runner.xcworkspace",
+            ]
+
+            # 파라미터 추가
+            if scheme:
+                cmd.append(f"-scheme")
+                cmd.append(f"{scheme}")
+
             result = subprocess.run(
-                [
-                    "xcodebuild",
-                    "-showBuildSettings",
-                    "-workspace",
-                    "ios/Runner.xcworkspace",
-                    "-scheme",
-                    scheme,
-                ],
+                cmd,
                 capture_output=True,
                 text=True,
                 check=True,

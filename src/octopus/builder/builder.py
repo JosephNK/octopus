@@ -15,3 +15,11 @@ class Builder(ABC):
         This method should be implemented by subclasses to perform the actual build process.
         """
         raise NotImplementedError("Subclasses must implement this method.")
+
+    @abstractmethod
+    def build_flutter(self, flavor: str) -> Optional[str]:
+        """
+        Build the Flutter project.
+        This method should be implemented by subclasses to perform the actual Flutter build process.
+        """
+        raise NotImplementedError("Subclasses must implement this method.")

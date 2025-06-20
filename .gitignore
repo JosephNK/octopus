@@ -40,3 +40,4 @@ poetry.lock
 .idea/
 *.swp
 *.swo
+repo/

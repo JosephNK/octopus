@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -19,156 +20,379 @@ class GitManager:
         self.repo_url = repo_url
         self.local_path = Path(local_path)
 
-    def remove_directory(self) -> bool:
+    @staticmethod
+    def get_repo_name(url):
+        match = re.search(r"/([^/]+?)(?:\.git)?/?$", url)
+        return match.group(1) if match else None
+
+    def _run_command(
+        self, command: list, cwd: Optional[str] = None
+    ) -> tuple[bool, str]:
         """
-        로컬 디렉토리를 삭제
+        명령어를 실행하고 결과를 반환
+
+        Args:
+            command (list): 실행할 명령어 리스트
+            cwd (str, optional): 작업 디렉토리
 
         Returns:
-            bool: 삭제 성공 여부
+            tuple[bool, str]: (성공 여부, 출력/에러 메시지)
+        """
+        try:
+            result = subprocess.run(
+                command, cwd=cwd, capture_output=True, text=True, check=True
+            )
+            return True, result.stdout
+        except subprocess.CalledProcessError as e:
+            return False, f"Error: {e.stderr}"
+        except Exception as e:
+            return False, f"Unexpected error: {str(e)}"
+
+    def _is_git_repo(self) -> bool:
+        """
+        해당 경로가 Git 저장소인지 확인
+
+        Returns:
+            bool: Git 저장소 여부
+        """
+        git_dir = self.local_path / ".git"
+        return git_dir.exists()
+
+    def remove_directory(self) -> bool:
+        """
+        Remove local directory
+
+        Returns:
+            bool: Success status
         """
         try:
             if self.local_path.exists():
                 shutil.rmtree(self.local_path)
-                print(f"디렉토리 삭제 완료: {self.local_path}")
+                print(f"🗑️  Directory removed: {self.local_path}")
                 return True
             else:
-                print(f"디렉토리가 존재하지 않음: {self.local_path}")
+                print(f"ℹ️  Directory does not exist: {self.local_path}")
                 return True
         except Exception as e:
-            print(f"디렉토리 삭제 실패: {e}")
+            print(f"❌ Failed to remove directory: {e}")
             return False
 
     def clone_repository(self) -> bool:
         """
-        Git 저장소를 클론
+        Clone Git repository
 
         Returns:
-            bool: 클론 성공 여부
+            bool: Success status
         """
         command = ["git", "clone", self.repo_url, str(self.local_path)]
         success, output = self._run_command(command)
 
         if success:
-            print(f"저장소 클론 완료: {self.repo_url} -> {self.local_path}")
+            print(f"📥 Repository cloned: {self.repo_url} -> {self.local_path}")
             return True
         else:
-            print(f"저장소 클론 실패: {output}")
+            print(f"❌ Clone failed: {output}")
             return False
 
     def pull_repository(self) -> bool:
         """
-        Git 저장소에서 최신 변경사항을 pull
+        Pull latest changes from Git repository
 
         Returns:
-            bool: Pull 성공 여부
+            bool: Success status
         """
         if not self._is_git_repo():
-            print(f"Git 저장소가 아닙니다: {self.local_path}")
+            print(f"❌ Not a Git repository: {self.local_path}")
             return False
 
         command = ["git", "pull"]
         success, output = self._run_command(command, cwd=str(self.local_path))
 
         if success:
-            print(f"Pull 완료: {output.strip()}")
+            print(f"📥 Pull completed: {output.strip()}")
             return True
         else:
-            print(f"Pull 실패: {output}")
+            print(f"❌ Pull failed: {output}")
             return False
 
     def fresh_pull(self) -> bool:
         """
-        폴더가 존재하면 삭제 후 새로 클론
+        Remove existing folder and clone fresh
 
         Returns:
-            bool: 작업 성공 여부
+            bool: Success status
         """
-        print(f"Fresh pull 시작: {self.repo_url}")
+        print(f"🔄 Starting fresh pull: {self.repo_url}")
 
-        # 1. 기존 디렉토리 삭제
+        # 1. Remove existing directory
         if not self.remove_directory():
             return False
 
-        # 2. 새로 클론
+        # 2. Clone fresh
         if not self.clone_repository():
             return False
 
-        print("Fresh pull 완료!")
+        print("✅ Fresh pull completed!")
         return True
 
     def sync_repository(self, force_fresh: bool = False) -> bool:
         """
-        저장소를 동기화 (pull 또는 fresh pull)
+        Synchronize repository (pull or fresh pull)
 
         Args:
-            force_fresh (bool): 강제로 fresh pull 실행 여부
+            force_fresh (bool): Force fresh pull execution
 
         Returns:
-            bool: 동기화 성공 여부
+            bool: Success status
         """
         if force_fresh:
             return self.fresh_pull()
 
-        # 로컬 경로가 존재하고 Git 저장소인 경우 pull
+        # If local path exists and is a Git repository, pull
         if self.local_path.exists() and self._is_git_repo():
             return self.pull_repository()
         else:
-            # 존재하지 않거나 Git 저장소가 아닌 경우 fresh pull
+            # If doesn't exist or not a Git repository, fresh pull
             return self.fresh_pull()
 
-    def checkout_branch(self, branch_name: str, create_new: bool = False) -> bool:
+    def delete_branch(
+        self, branch_name: str, force: bool = False, remote: bool = False
+    ) -> bool:
         """
-        브랜치를 체크아웃
+        Delete branch
 
         Args:
-            branch_name (str): 체크아웃할 브랜치 이름
-            create_new (bool): 새 브랜치 생성 여부
+            branch_name (str): Branch name to delete
+            force (bool): Force delete (delete unmerged branches)
+            remote (bool): Also delete remote branch
 
         Returns:
-            bool: 체크아웃 성공 여부
+            bool: Success status
         """
         if not self._is_git_repo():
-            print(f"Git 저장소가 아닙니다: {self.local_path}")
+            print(f"❌ Not a Git repository: {self.local_path}")
             return False
 
-        if create_new:
-            command = ["git", "checkout", "-b", branch_name]
-            action = f"새 브랜치 생성 및 체크아웃: {branch_name}"
+        success = True
+
+        # Check current branch
+        current_success, current_branch = self._run_command(
+            ["git", "branch", "--show-current"], cwd=str(self.local_path)
+        )
+
+        if current_success and current_branch.strip() == branch_name:
+            print(
+                f"❌ Cannot delete current branch ({branch_name}). Please switch to another branch first."
+            )
+            return False
+
+        # Delete local branch
+        delete_option = "-D" if force else "-d"
+        command = ["git", "branch", delete_option, branch_name]
+        local_success, output = self._run_command(command, cwd=str(self.local_path))
+
+        if local_success:
+            print(f"🗑️  Local branch deleted: {branch_name}")
         else:
+            print(f"❌ Local branch deletion failed: {output}")
+            success = False
+
+        # Delete remote branch
+        if remote and local_success:
+            remote_command = ["git", "push", "origin", "--delete", branch_name]
+            remote_success, remote_output = self._run_command(
+                remote_command, cwd=str(self.local_path)
+            )
+
+            if remote_success:
+                print(f"🌐 Remote branch deleted: origin/{branch_name}")
+            else:
+                print(f"❌ Remote branch deletion failed: {remote_output}")
+                success = False
+
+        return success
+
+    def checkout_branch(self, branch_name: str, fresh_clone: bool = True) -> bool:
+        """
+        Checkout to specific branch
+
+        Args:
+            branch_name (str): Branch name to checkout
+            fresh_clone (bool): True for fresh clone approach, False for local cleanup approach (default: True)
+
+        Returns:
+            bool: Success status
+        """
+        print(f"🚀 Starting branch checkout: {branch_name}")
+
+        if not fresh_clone:
+            # Option 1: Local repository cleanup approach
+            print("🧹 Using local repository cleanup approach...")
+
+            # 1. Check if Git repository exists
+            if not self.local_path.exists():
+                print(f"❌ Local path does not exist: {self.local_path}")
+                return False
+
+            if not self._is_git_repo():
+                print(f"❌ Not a Git repository: {self.local_path}")
+                return False
+
+            # 2. Check current branch
+            current_success, current_branch = self._run_command(
+                ["git", "branch", "--show-current"], cwd=str(self.local_path)
+            )
+
+            is_current_branch = (
+                current_success and current_branch.strip() == branch_name
+            )
+            if is_current_branch:
+                print(
+                    f"ℹ️  Already on branch: {branch_name}, but will update to latest..."
+                )
+
+            # 3. Reset local changes
+            print("🔄 Resetting local changes...")
+            if not self.reset_hard():
+                return False
+
+            # 4. Clean untracked files
+            print("🧹 Cleaning untracked files...")
+            if not self.clean_untracked():
+                return False
+
+            # 5. Fetch latest changes
+            print("📥 Fetching latest changes...")
+            fetch_success, fetch_output = self._run_command(
+                ["git", "fetch"], cwd=str(self.local_path)
+            )
+
+            if not fetch_success:
+                print(f"❌ Fetch failed: {fetch_output}")
+                return False
+
+            # 6. Branch checkout (only if not current branch)
+            if not is_current_branch:
+                command = ["git", "checkout", branch_name]
+                success, output = self._run_command(command, cwd=str(self.local_path))
+
+                if not success:
+                    print(f"❌ Branch checkout failed: {output}")
+                    return False
+
+                print(f"🌿 Branch checkout completed: {branch_name}")
+
+            # 7. Pull latest changes (always execute regardless of current branch)
+            print("📥 Pulling latest changes...")
+            if self.pull_repository():
+                print("✅ Local cleanup checkout completed!")
+                return True
+            else:
+                print("⚠️  Checkout successful but pull failed")
+                return True  # Return True since checkout was successful
+
+        else:
+            # Option 2: Fresh clone approach (remove → clone → checkout)
+            print("🗑️  Using fresh clone approach...")
+
+            # 1. Remove existing directory
+            if not self.remove_directory():
+                return False
+
+            # 2. Clone fresh
+            if not self.clone_repository():
+                return False
+
+            # 3. Checkout specific branch
             command = ["git", "checkout", branch_name]
-            action = f"브랜치 체크아웃: {branch_name}"
+            success, output = self._run_command(command, cwd=str(self.local_path))
+
+            if success:
+                print(f"🌿 Branch checkout completed: {branch_name}")
+                print("✅ Fresh clone checkout completed!")
+                return True
+            else:
+                print(f"❌ Branch checkout failed: {output}")
+                return False
+
+    def reset_hard(self, target: str = "HEAD") -> bool:
+        """
+        Execute git reset --hard (delete all local changes)
+
+        Args:
+            target (str): Reset target (default: HEAD)
+
+        Returns:
+            bool: Success status
+        """
+        if not self._is_git_repo():
+            print(f"❌ Not a Git repository: {self.local_path}")
+            return False
+
+        command = ["git", "reset", "--hard", target]
+        success, output = self._run_command(command, cwd=str(self.local_path))
+
+        if success:
+            print(f"🔄 Hard reset completed: {target}")
+            return True
+        else:
+            print(f"❌ Hard reset failed: {output}")
+            return False
+
+    def clean_untracked(self, force: bool = True, directories: bool = True) -> bool:
+        """
+        Delete untracked files and directories
+
+        Args:
+            force (bool): Force deletion
+            directories (bool): Also delete directories
+
+        Returns:
+            bool: Success status
+        """
+        if not self._is_git_repo():
+            print(f"❌ Not a Git repository: {self.local_path}")
+            return False
+
+        command = ["git", "clean"]
+        if force:
+            command.append("-f")
+        if directories:
+            command.append("-d")
 
         success, output = self._run_command(command, cwd=str(self.local_path))
 
         if success:
-            print(f"{action} 완료")
+            print(f"🧹 Untracked files/directories cleaned")
+            if output.strip():
+                print(f"Deleted items:\n{output}")
             return True
         else:
-            print(f"{action} 실패: {output}")
+            print(f"❌ Clean failed: {output}")
             return False
 
     def checkout_commit(self, commit_hash: str) -> bool:
         """
-        특정 커밋을 체크아웃
+        Checkout specific commit
 
         Args:
-            commit_hash (str): 커밋 해시
+            commit_hash (str): Commit hash
 
         Returns:
-            bool: 체크아웃 성공 여부
+            bool: Success status
         """
         if not self._is_git_repo():
-            print(f"Git 저장소가 아닙니다: {self.local_path}")
+            print(f"❌ Not a Git repository: {self.local_path}")
             return False
 
         command = ["git", "checkout", commit_hash]
         success, output = self._run_command(command, cwd=str(self.local_path))
 
         if success:
-            print(f"커밋 체크아웃 완료: {commit_hash}")
+            print(f"📌 Commit checkout completed: {commit_hash}")
             return True
         else:
-            print(f"커밋 체크아웃 실패: {output}")
+            print(f"❌ Commit checkout failed: {output}")
             return False
 
     def get_branches(self) -> tuple[bool, list]:
@@ -223,6 +447,7 @@ class GitManager:
             "current_branch": None,
             "remote_url": None,
             "branches": None,
+            "local_path": str(self.local_path),
         }
 
         if status["local_path_exists"]:
@@ -250,73 +475,30 @@ class GitManager:
 
         return status
 
-    def _run_command(
-        self, command: list, cwd: Optional[str] = None
-    ) -> tuple[bool, str]:
-        """
-        명령어를 실행하고 결과를 반환
 
-        Args:
-            command (list): 실행할 명령어 리스트
-            cwd (str, optional): 작업 디렉토리
+# === 간단한 사용 예시 ===
 
-        Returns:
-            tuple[bool, str]: (성공 여부, 출력/에러 메시지)
-        """
-        try:
-            result = subprocess.run(
-                command, cwd=cwd, capture_output=True, text=True, check=True
-            )
-            return True, result.stdout
-        except subprocess.CalledProcessError as e:
-            return False, f"Error: {e.stderr}"
-        except Exception as e:
-            return False, f"Unexpected error: {str(e)}"
+# 1. 저장소 동기화 (기본)
+# git_manager.sync_repository()
 
-    def _is_git_repo(self) -> bool:
-        """
-        해당 경로가 Git 저장소인지 확인
+# 2. 완전히 새로 클론 (폴더 삭제 후)
+# git_manager.fresh_pull()
 
-        Returns:
-            bool: Git 저장소 여부
-        """
-        git_dir = self.local_path / ".git"
-        return git_dir.exists()
-
-
-# 사용 예시
-# if __name__ == "__main__":
-#     # GitManager 인스턴스 생성
-#     git_manager = GitManager(
-#         repo_url="https://github.com/username/repository.git", local_path="./my_project"
-#     )
-
-#     # 상태 확인
-#     status = git_manager.get_status()
-#     print("현재 상태:", status)
-
-#     # 저장소 동기화
-#     if git_manager.sync_repository():
-#         print("동기화 성공!")
-#     else:
-#         print("동기화 실패!")
-
-#     # 브랜치 목록 확인
-#     success, branches = git_manager.get_branches()
-#     if success:
-#         print("브랜치 정보:")
-#         print(f"  현재 브랜치: {branches['current']}")
-#         print(f"  로컬 브랜치: {branches['local']}")
-#         print(f"  원격 브랜치: {branches['remote']}")
-
-# 브랜치 체크아웃
+# 3. 특정 브랜치로 체크아웃 (폴더 삭제 → 클론 → 체크아웃)
 # git_manager.checkout_branch("develop")
+# git_manager.checkout_branch("feature/login")
 
-# 새 브랜치 생성 및 체크아웃
-# git_manager.checkout_branch("feature/new-feature", create_new=True)
+# === 개별 기능 사용 예시 ===
+
+# 브랜치 삭제
+# git_manager.delete_branch("old-feature")
 
 # 특정 커밋 체크아웃
 # git_manager.checkout_commit("a1b2c3d4")
+
+# 상태 확인
+# status = git_manager.get_status()
+# print(status)
 
 # 강제로 fresh pull 실행
 # git_manager.sync_repository(force_fresh=True)
