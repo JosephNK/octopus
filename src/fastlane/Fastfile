@@ -1,0 +1,55 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Description of what the lane does"
+  lane :custom_lane do
+    # add actions here: https://docs.fastlane.tools/actions
+  end
+
+  desc "Export IPA with correct provisioning"
+  lane :export do |options| 
+    gym(
+      workspace: options[:workspace], 
+      scheme: options[:scheme],
+      skip_build_archive: true,
+      archive_path: options[:archive_path],
+      export_method: "app-store",
+      output_directory: options[:output_directory],
+      export_options: {
+      signingStyle: "manual",
+        provisioningProfiles: {
+          options[:bundle_id] => options[:provisioning_profile]
+        }
+      }
+    )
+    # gym(
+    #   workspace: "/Users/josephnk/workspace/development/dateping-app/app/ios/Runner.xcworkspace", 
+    #   scheme: "qa",
+    #   skip_build_archive: true,
+    #   archive_path: "/Users/josephnk/workspace/development/dateping-app/app/build/ios/archive/Runner.xcarchive",
+    #   export_method: "app-store",  # app-store 유지
+    #   output_directory: "/Users/josephnk/workspace/development/dateping-app/app/build/ios/archive/ipa",
+    #   export_options: {
+    #   signingStyle: "manual",
+    #     provisioningProfiles: {
+    #       "com.aricosystems.dateping.temp" => "com.aricosystems.dateping.temp-appstore"
+    #     }
+    #   }
+    # )
+  end
+end

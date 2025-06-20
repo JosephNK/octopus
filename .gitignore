@@ -1,0 +1,42 @@
+# Python 관련
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+*.env
+*.venv
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
+
+# Fastlane 관련
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/screenshots/
+**/fastlane/test_output/
+**/fastlane/logs/
+
+# macOS 관련
+.DS_Store
+
+# VS Code 관련
+.vscode/
+*.code-workspace
+
+# Ruby 관련 (Fastlane 사용 시)
+Gemfile.lock
+*.gem
+
+# Poetry 관련
+poetry.lock
+
+# 기타
+.idea/
+*.swp
+*.swo
