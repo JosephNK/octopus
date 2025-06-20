@@ -33,7 +33,7 @@ class BuilderFutterIOS(Builder):
         print(f"ℹ️  Changed working directory to {os.getcwd()}")
 
         # Pod install 실행
-        pod_install_success = self.pod_install()
+        pod_install_success = self.pod_install(path=os.getcwd())
         if pod_install_success is False:
             raise RuntimeError(
                 "Pod install failed. Please check the output for details."
@@ -115,14 +115,14 @@ class BuilderFutterIOS(Builder):
             print(f"❌ Extract xcarchive path failed: {e}")
             return None
 
-    def pod_install(self) -> bool:
+    def pod_install(self, path: str) -> bool:
         """Pod install 실행"""
         try:
             print("ℹ️  Running pod install...")
             cmd = ["pod", "install", "--repo-update"]
             result = subprocess.run(
                 cmd,
-                cwd=f"{Path.cwd()}/ios",
+                cwd=f"{path}/ios",
                 capture_output=True,
                 text=True,
                 check=True,
@@ -149,31 +149,27 @@ class BuilderFutterIOS(Builder):
         provisioning_profile: Optional[str] = None,
     ) -> Optional[str]:
         """Export the xcarchive to an IPA file."""
-        # 경로 변경
-        fastlane_run_path = f"{original_path}/src"
-        os.chdir(fastlane_run_path)
-        print(f"ℹ️  Changed working directory to {os.getcwd()}")
-
-        # 기본 명령어
-        cmd = ["fastlane", "export"]
-
-        # 파라미터 추가
-        if workspace:
-            cmd.append(f"workspace:{workspace}")
-        if scheme:
-            cmd.append(f"scheme:{scheme}")
-        if archive_path:
-            cmd.append(f"archive_path:{archive_path}")
-        if output_directory:
-            cmd.append(f"output_directory:{output_directory}")
-        if bundle_id:
-            cmd.append(f"bundle_id:{bundle_id}")
-        if provisioning_profile:
-            cmd.append(f"provisioning_profile:{provisioning_profile}")
-
         try:
+            # 기본 명령어
+            cmd = ["fastlane", "export"]
+
+            # 파라미터 추가
+            if workspace:
+                cmd.append(f"workspace:{workspace}")
+            if scheme:
+                cmd.append(f"scheme:{scheme}")
+            if archive_path:
+                cmd.append(f"archive_path:{archive_path}")
+            if output_directory:
+                cmd.append(f"output_directory:{output_directory}")
+            if bundle_id:
+                cmd.append(f"bundle_id:{bundle_id}")
+            if provisioning_profile:
+                cmd.append(f"provisioning_profile:{provisioning_profile}")
+
             result = subprocess.run(
                 cmd,
+                cwd=f"{original_path}/src",
                 capture_output=True,
                 text=True,
                 check=True,
