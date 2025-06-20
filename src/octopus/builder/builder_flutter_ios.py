@@ -78,10 +78,10 @@ class BuilderFutterIOS(Builder):
 
     def build_flutter(self, flavor: str) -> Optional[str]:
         try:
-            # 기본 명령어
+            print("ℹ️  Running build flutter...")
+
             cmd = ["flutter", "build", "ipa"]
 
-            # 파라미터 추가
             if flavor:
                 cmd.append(f"--flavor")
                 cmd.append(f"{flavor}")
@@ -124,7 +124,9 @@ class BuilderFutterIOS(Builder):
                     return None
 
             print("ℹ️  Running pod install...")
+
             cmd = ["pod", "install", "--repo-update"]
+
             result = subprocess.run(
                 cmd,
                 cwd=f"{path}/ios",
@@ -155,10 +157,10 @@ class BuilderFutterIOS(Builder):
     ) -> Optional[str]:
         """Export the xcarchive to an IPA file."""
         try:
-            # 기본 명령어
+            print("ℹ️  Running export ipa...")
+
             cmd = ["fastlane", "export"]
 
-            # 파라미터 추가
             if workspace:
                 cmd.append(f"workspace:{workspace}")
             if scheme:

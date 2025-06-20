@@ -122,6 +122,7 @@ def build(
                 builder = BuilderFutterAndroid(
                     build_path=dir_app_path,
                     flavor=flavor,
+                    use_appbundle=True,
                 )
             output_file_path = builder.build()
             if not output_file_path:
