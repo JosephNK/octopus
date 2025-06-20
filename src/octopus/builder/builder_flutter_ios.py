@@ -115,9 +115,14 @@ class BuilderFutterIOS(Builder):
             print(f"❌ Extract xcarchive path failed: {e}")
             return None
 
-    def pod_install(self, path: str) -> bool:
+    def pod_install(self, path: str) -> Optional[bool]:
         """Pod install 실행"""
         try:
+            # Podfile이 존재하는지 확인
+            for filename in ["Podfile"]:
+                if (Path(f"{path}/ios") / filename).exists() is False:
+                    return None
+
             print("ℹ️  Running pod install...")
             cmd = ["pod", "install", "--repo-update"]
             result = subprocess.run(

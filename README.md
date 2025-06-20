@@ -18,7 +18,7 @@ Octopus is a powerful CI/CD tool designed for iOS and Android applications. It s
 To run the tool, use the following command:
 
 ```bash
-poetry run poe run \
+poetry run poe build \
   --platform ios \
   --framework flutter \
   --provisioning-profile com.josephnk.mockup1-appstore \
