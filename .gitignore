@@ -18,6 +18,7 @@ build/
 # Fastlane 관련
 **/fastlane/report.xml
 **/fastlane/Preview.html
+**/fastlane/metadata/
 **/fastlane/screenshots/
 **/fastlane/test_output/
 **/fastlane/logs/
