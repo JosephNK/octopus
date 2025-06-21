@@ -41,3 +41,4 @@ poetry.lock
 *.swp
 *.swo
 repo/
+*.p8

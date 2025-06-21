@@ -29,7 +29,39 @@ Description of what the lane does
 [bundle exec] fastlane ios export
 ```
 
-Export IPA with correct provisioning
+Export IPA with provisioning
+
+### ios beta
+
+```sh
+[bundle exec] fastlane ios beta
+```
+
+Deploy to TestFlight for beta testing
+
+### ios release
+
+```sh
+[bundle exec] fastlane ios release
+```
+
+Deploy to App Store with specified configuration
+
+### ios dev_release
+
+```sh
+[bundle exec] fastlane ios dev_release
+```
+
+Quick upload for development
+
+### ios auto_release
+
+```sh
+[bundle exec] fastlane ios auto_release
+```
+
+Fully automated release with review submission
 
 ----
 
