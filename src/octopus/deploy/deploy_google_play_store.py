@@ -1,11 +1,12 @@
-class DeployGooglePlayStore:
-    def __init__(self, app_id: str, service_account_json: str):
-        self.app_id = app_id
-        self.service_account_json = service_account_json
+from .deploy import Deploy
 
-    def deploy(self, apk_path: str):
-        # Placeholder for deployment logic
-        print(
-            f"Deploying {apk_path} to Google Play Store for app {self.app_id} using service account {self.service_account_json}"
-        )
-        # Actual deployment code would go here
+
+class DeployGooglePlayStore(Deploy):
+    def __init__(self, build_path: str):
+        super().__init__(build_path)
+
+    def deploy(self):
+        # Logic to deploy the app store
+        print(f"Deploying app store: {self.build_path}")
+        # Add deployment logic here
+        return True

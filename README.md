@@ -52,19 +52,6 @@ cd octopus
 poetry install
 ```
 
-## 📋 Usage
-
-### Basic Command
-
-```bash
-poetry run poe build \
-  --platform ios \
-  --framework flutter \
-  --provisioning-profile com.josephnk.mockup1-appstore \
-  --git https://github.com/JosephNK/flutter_mockup1 \
-  --branch main
-```
-
 ### Command Options
 
 | Option | Description | Required | Example |

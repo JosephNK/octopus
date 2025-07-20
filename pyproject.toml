@@ -16,4 +16,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poe.tasks]
-build = "python -m src.octopus.main"
+builder = "python -m src.octopus.main"

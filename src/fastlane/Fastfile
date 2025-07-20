@@ -25,6 +25,64 @@ def setup_app_store_api_key(options)
   )
 end
 
+def extract_build_info_from_ipa(ipa_path)
+  # IPA 파일에서 빌드 정보 추출하여 로그에 출력
+  return unless ipa_path && File.exist?(ipa_path)
+  
+  UI.message "📱 Extracting build information from IPA..."
+  
+  begin
+    # unzip 명령어를 사용해서 IPA에서 Info.plist 추출
+    require 'tempfile'
+    require 'fileutils'
+    
+    Dir.mktmpdir do |temp_dir|
+      # IPA 압축 해제
+      system("unzip -q '#{ipa_path}' -d '#{temp_dir}'")
+      
+      # Info.plist 파일 찾기
+      info_plist_path = Dir.glob("#{temp_dir}/Payload/*/Info.plist").first
+      
+      if info_plist_path
+        # plutil을 사용해서 Info.plist를 JSON으로 변환하여 읽기
+        json_output = `plutil -convert json -o - '#{info_plist_path}' 2>/dev/null`
+        
+        if $?.success? && !json_output.empty?
+          require 'json'
+          info_plist = JSON.parse(json_output)
+          
+          version = info_plist['CFBundleShortVersionString']
+          build_number = info_plist['CFBundleVersion']
+          bundle_id = info_plist['CFBundleIdentifier']
+          
+          UI.important "🔍 Build Information:"
+          UI.message "   📦 Bundle ID: #{bundle_id}"
+          UI.message "   📱 App Version: #{version}"
+          UI.message "   🔢 Build Number: #{build_number}"
+          UI.message "   📝 Full Version: #{version} (#{build_number})"
+          
+          # 빌드 정보를 해시로 반환
+          {
+            bundle_id: bundle_id,
+            version: version,
+            build_number: build_number,
+            full_version: "#{version} (#{build_number})"
+          }
+        else
+          UI.message "⚠️  Could not parse Info.plist from IPA"
+          nil
+        end
+      else
+        UI.message "⚠️  Could not find Info.plist in IPA"
+        nil
+      end
+    end
+  rescue => e
+    UI.message "⚠️  Could not extract build info from IPA: #{e.message}"
+    nil
+  end
+end
+
 def process_release_notes(options)
   # 릴리즈 노트 처리 로직
   # Available language codes
@@ -171,6 +229,9 @@ platform :ios do
   # 개발용 빠른 업로드
   desc "Quick upload for development"
   lane :dev_release do |options|
+    # IPA 파일에서 빌드 정보 추출하여 로그에 출력
+    build_info = extract_build_info_from_ipa(options[:ipa])
+
     upload_to_app_store(
       ipa: options[:ipa],
       api_key: setup_app_store_api_key(options),
@@ -190,6 +251,9 @@ platform :ios do
   # 완전 자동 배포
   desc "Fully automated release with review submission"
   lane :auto_release do |options|
+    # IPA 파일에서 빌드 정보 추출하여 로그에 출력
+    build_info = extract_build_info_from_ipa(options[:ipa])
+    
     upload_to_app_store(
       ipa: options[:ipa],
       api_key: setup_app_store_api_key(options),

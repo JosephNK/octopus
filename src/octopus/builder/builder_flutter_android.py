@@ -15,7 +15,7 @@ class BuilderFutterAndroid(Builder):
         super().__init__(build_path, flavor)
         self.use_appbundle = use_appbundle
 
-    def build(self) -> str:
+    def build(self) -> Optional[str]:
         print("=" * 80)
         print(
             f"🚀 Building Android project at {self.build_path} with flavor {self.flavor}..."

@@ -16,7 +16,7 @@ class BuilderFutterIOS(Builder):
         super().__init__(build_path, flavor)
         self.provisioning_profile = provisioning_profile
 
-    def build(self) -> str:
+    def build(self) -> Optional[str]:
         print("=" * 80)
         print(
             f"🚀 Building iOS project at {self.build_path} with flavor {self.flavor}..."

@@ -9,7 +9,7 @@ class Builder(ABC):
         pass
 
     @abstractmethod
-    def build(self) -> None:
+    def build(self) -> Optional[str]:
         """
         Build the project.
         This method should be implemented by subclasses to perform the actual build process.
