@@ -142,8 +142,8 @@ platform :ios do
     )
   end
 
-  # 완전 자동 배포
-  desc "Fully automated release with review submission"
+  # 자동 배포
+  desc "Automated release"
   lane :auto_release do |options|
     # IPA 파일에서 빌드 정보 추출하여 로그에 출력
     build_info = CommonHelper.extract_build_info_from_ipa(options[:ipa])
