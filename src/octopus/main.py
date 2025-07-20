@@ -138,14 +138,7 @@ def command() -> None:
         }
         lane = lane_mapping[args.lane]
 
-        print(f"Deploying with lane: {lane.value}")
-        print(f"Build file path: {args.build_file_path}")
-        print(f"iOS API Key ID: {args.ios_api_key_id}")
-        print(f"iOS API Key Issuer ID: {args.ios_api_key_issuer_id}")
-        print(f"Skip binary upload: {args.skip_binary_upload}")
-        print(f"Release notes: {release_notes_dict}")
-
-        result = deploy(
+        result = deployment(
             build_file_path=args.build_file_path,
             lane=lane,
             ios_api_key_id=args.ios_api_key_id,
@@ -235,7 +228,7 @@ def build(
         return None
 
 
-def deploy(
+def deployment(
     build_file_path: str,
     lane: FastlaneRelease,
     ios_api_key_id: str,
@@ -265,7 +258,6 @@ def deploy(
                 skip_binary_upload=skip_binary_upload,
                 release_notes=release_notes,
             )
-            success = deploy.deploy()
         elif build_path.suffix == ".apk":
             print("📦 Deploying Android app...")
             raise ValueError(
@@ -274,9 +266,8 @@ def deploy(
         elif build_path.suffix == ".aab":
             print("📦 Deploying Android App Bundle...")
             deploy = DeployGooglePlayStore()
-            success = deploy.deploy()
 
-        return success
+        return deploy.deploy()
     except Exception as e:
         print(f"❌ Deployment failed: {e}")
         return False
