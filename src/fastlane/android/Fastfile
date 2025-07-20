@@ -1,0 +1,182 @@
+# This file contains the fastlane.tools configuration for Android
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+# 공통 헬퍼 import
+require_relative '../helpers/CommonHelper'
+
+default_platform(:android)
+
+platform :android do
+  desc "Description of what the lane does"
+  lane :custom_lane do
+    # add actions here: https://docs.fastlane.tools/actions
+  end
+
+  desc "Build APK for development"
+  lane :build_debug do |options|
+    gradle(
+      task: "clean assembleDebug",
+      project_dir: options[:project_dir] || "android/"
+    )
+  end
+
+  desc "Build APK for release"
+  lane :build_release do |options|
+    gradle(
+      task: "clean assembleRelease",
+      project_dir: options[:project_dir] || "android/",
+      properties: {
+        "android.injected.signing.store.file" => options[:store_file],
+        "android.injected.signing.store.password" => options[:store_password],
+        "android.injected.signing.key.alias" => options[:key_alias],
+        "android.injected.signing.key.password" => options[:key_password]
+      }
+    )
+  end
+
+  desc "Build AAB for Play Store"
+  lane :build_aab do |options|
+    gradle(
+      task: "clean bundleRelease",
+      project_dir: options[:project_dir] || "android/",
+      properties: {
+        "android.injected.signing.store.file" => options[:store_file],
+        "android.injected.signing.store.password" => options[:store_password],
+        "android.injected.signing.key.alias" => options[:key_alias],
+        "android.injected.signing.key.password" => options[:key_password]
+      }
+    )
+  end
+
+  # Internal Testing 배포용
+  desc "Deploy to Google Play Internal Testing"
+  lane :internal do |options|
+    # APK 파일에서 빌드 정보 추출하여 로그에 출력
+    build_info = CommonHelper.extract_build_info_from_apk(options[:apk]) if options[:apk]
+
+    upload_to_play_store(
+      track: 'internal',
+      apk: options[:apk],
+      aab: options[:aab],
+      json_key: options[:json_key],
+      package_name: options[:package_name],
+      skip_upload_metadata: options[:skip_upload_metadata] || true,
+      skip_upload_images: options[:skip_upload_images] || true,
+      skip_upload_screenshots: options[:skip_upload_screenshots] || true,
+      release_status: options[:release_status] || 'completed',
+      changelogs: CommonHelper.process_release_notes(options)
+    )
+  end
+
+  # Alpha Testing 배포용
+  desc "Deploy to Google Play Alpha Testing"
+  lane :alpha do |options|
+    # APK 파일에서 빌드 정보 추출하여 로그에 출력
+    build_info = CommonHelper.extract_build_info_from_apk(options[:apk]) if options[:apk]
+
+    upload_to_play_store(
+      track: 'alpha',
+      apk: options[:apk],
+      aab: options[:aab],
+      json_key: options[:json_key],
+      package_name: options[:package_name],
+      skip_upload_metadata: options[:skip_upload_metadata] || true,
+      skip_upload_images: options[:skip_upload_images] || true,
+      skip_upload_screenshots: options[:skip_upload_screenshots] || true,
+      release_status: options[:release_status] || 'completed',
+      changelogs: CommonHelper.process_release_notes(options)
+    )
+  end
+
+  # Beta Testing 배포용
+  desc "Deploy to Google Play Beta Testing"
+  lane :beta do |options|
+    # APK 파일에서 빌드 정보 추출하여 로그에 출력
+    build_info = CommonHelper.extract_build_info_from_apk(options[:apk]) if options[:apk]
+
+    upload_to_play_store(
+      track: 'beta',
+      apk: options[:apk],
+      aab: options[:aab],
+      json_key: options[:json_key],
+      package_name: options[:package_name],
+      skip_upload_metadata: options[:skip_upload_metadata] || false,
+      skip_upload_images: options[:skip_upload_images] || false,
+      skip_upload_screenshots: options[:skip_upload_screenshots] || false,
+      release_status: options[:release_status] || 'completed',
+      changelogs: CommonHelper.process_release_notes(options)
+    )
+  end
+
+  # Production 배포용
+  desc "Deploy to Google Play Store Production"
+  lane :release do |options|
+    # APK 파일에서 빌드 정보 추출하여 로그에 출력
+    build_info = CommonHelper.extract_build_info_from_apk(options[:apk]) if options[:apk]
+
+    upload_to_play_store(
+      track: 'production',
+      apk: options[:apk],
+      aab: options[:aab],
+      json_key: options[:json_key],
+      package_name: options[:package_name],
+      skip_upload_metadata: options[:skip_upload_metadata] || false,
+      skip_upload_images: options[:skip_upload_images] || false,
+      skip_upload_screenshots: options[:skip_upload_screenshots] || false,
+      release_status: options[:release_status] || 'completed',
+      changelogs: CommonHelper.process_release_notes(options)
+    )
+  end
+
+  # 개발용 빠른 업로드 (Internal Testing)
+  desc "Quick upload for development"
+  lane :dev_release do |options|
+    # APK 파일에서 빌드 정보 추출하여 로그에 출력
+    build_info = CommonHelper.extract_build_info_from_apk(options[:apk]) if options[:apk]
+
+    upload_to_play_store(
+      track: 'internal',
+      apk: options[:apk],
+      aab: options[:aab],
+      json_key: options[:json_key],
+      package_name: options[:package_name],
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      release_status: 'completed',
+      changelogs: CommonHelper.process_release_notes(options)
+    )
+  end
+
+  # 완전 자동 배포 (Production)
+  desc "Fully automated release to production"
+  lane :auto_release do |options|
+    # APK 파일에서 빌드 정보 추출하여 로그에 출력
+    build_info = CommonHelper.extract_build_info_from_apk(options[:apk]) if options[:apk]
+
+    upload_to_play_store(
+      track: 'production',
+      apk: options[:apk],
+      aab: options[:aab],
+      json_key: options[:json_key],
+      package_name: options[:package_name],
+      skip_upload_metadata: false,
+      skip_upload_images: false,
+      skip_upload_screenshots: false,
+      release_status: 'completed',
+      changelogs: CommonHelper.process_release_notes(options)
+    )
+  end
+end
