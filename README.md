@@ -52,35 +52,58 @@ cd octopus
 poetry install
 ```
 
-### Command Options
-
-| Option | Description | Required | Example |
-|--------|-------------|----------|---------|
-| `--platform` | Target platform (ios/android) | ✅ | `ios`, `android` |
-| `--framework` | Development framework | ✅ | `flutter` |
-| `--provisioning-profile` | iOS provisioning profile | ❌ | `com.example.app-appstore` |
-| `--git` | Git repository URL | ✅ | `https://github.com/user/repo` |
-| `--branch` | Git branch to build | ❌ | `main`, `develop`, `release/1.0` |
-
-### Examples
+### Build Examples
 
 #### iOS Build
 ```bash
-poetry run poe build \
+poetry run poe builder build \
   --platform ios \
   --framework flutter \
-  --provisioning-profile com.josephnk.mockup1-appstore \
-  --git https://github.com/JosephNK/flutter_mockup1 \
+  --provisioning-profile com.example.helloworld \
+  --git https://github.com/example/hello_world \
   --branch main
 ```
 
 #### Android Build
 ```bash
-poetry run poe build \
+poetry run poe builder build \
   --platform android \
   --framework flutter \
-  --git https://github.com/JosephNK/flutter_mockup1 \
+  --git https://github.com/example/hello_world \
   --branch main
+```
+
+### Deploy Examples (include build)
+
+#### iOS Deploy
+```bash
+poetry run poe builder deploy \
+  --platform ios \
+  --framework flutter \
+  --git https://github.com/example/hello_world \
+  --branch main \
+  --lane dev_release \
+  --provisioning-profile com.example.helloworld \
+  --ios-api-key-id ABCD36BC46 \
+  --ios-api-key-issuer-id xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx \
+  --ios-api-key-path AuthKey_ABCD36BC46.p8 \
+  --ios-skip-binary-upload false \
+  --release-notes '{"ko":"Bug fixes and improvements"}'
+```
+
+#### Android Deploy
+```bash
+poetry run poe builder deploy \
+  --platform android \
+  --framework flutter \
+  --git https://github.com/example/hello_world \
+  --branch main \
+  --lane dev_release \
+  --android-json-key-path json_key.json \
+  --android-package-name com.example.helloworld \
+  --android-skip-upload-aab false \
+  --android-validate-only true \
+  --release-notes '{"ko":"Bug fixes and improvements"}'
 ```
 
 ## 🤝 Contributing

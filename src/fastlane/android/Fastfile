@@ -24,6 +24,13 @@ platform :android do
     # add actions here: https://docs.fastlane.tools/actions
   end
 
+  desc "Validate Play Store JSON key"
+  lane :validate_json_key do |options|
+    validate_play_store_json_key(
+      json_key: options[:json_key],
+    )
+  end
+
   desc "Build APK for development"
   lane :build_debug do |options|
     gradle(
@@ -77,9 +84,10 @@ platform :android do
       skip_upload_metadata: options[:skip_upload_metadata] || true,
       skip_upload_images: options[:skip_upload_images] || true,
       skip_upload_screenshots: options[:skip_upload_screenshots] || true,
-      skip_upload_changelogs: options[:skip_upload_changelogs] || true,
+      skip_upload_changelogs: true,  # non-interactive mode를 위해 강제로 true
       validate_only: options[:validate_only] || false,
-      release_status: options[:release_status] || 'completed'
+      release_status: options[:release_status] || 'completed',
+      timeout: options[:timeout] || 300
     )
   end
 
@@ -100,9 +108,10 @@ platform :android do
       skip_upload_metadata: options[:skip_upload_metadata] || true,
       skip_upload_images: options[:skip_upload_images] || true,
       skip_upload_screenshots: options[:skip_upload_screenshots] || true,
-      skip_upload_changelogs: options[:skip_upload_changelogs] || true,
+      skip_upload_changelogs: true,  # non-interactive mode를 위해 강제로 true
       validate_only: options[:validate_only] || false,
-      release_status: options[:release_status] || 'completed'
+      release_status: options[:release_status] || 'completed',
+      timeout: options[:timeout] || 300
     )
   end
 
@@ -156,7 +165,7 @@ platform :android do
   desc "Quick upload for development"
   lane :dev_release do |options|
     # APK 파일에서 빌드 정보 추출하여 로그에 출력
-    build_info = CommonHelper.extract_build_info_from_apk(options[:apk]) if options[:apk]
+    # build_info = CommonHelper.extract_build_info_from_apk(options[:apk]) if options[:apk]
 
     upload_to_play_store(
       track: 'internal',
@@ -164,14 +173,19 @@ platform :android do
       aab: options[:aab],
       json_key: options[:json_key],
       package_name: options[:package_name],
-      skip_upload_apk: options[:skip_upload_apk] || false,
-      skip_upload_aab: options[:skip_upload_aab] || false,
-      skip_upload_metadata: true,
-      skip_upload_images: true,
-      skip_upload_screenshots: true,
-      skip_upload_changelogs: true,
-      validate_only: options[:validate_only] || false,
-      release_status: 'completed'
+      skip_upload_metadata: true,  
+      skip_upload_images: true,  
+      skip_upload_screenshots: true,  
+      skip_upload_changelogs: true,  
+      skip_upload_apk: true,  
+      # skip_upload_apk: options[:skip_upload_apk] || false,
+      # skip_upload_aab: options[:skip_upload_aab] || false,
+      # skip_upload_metadata: true,
+      # skip_upload_images: true,
+      # skip_upload_screenshots: true,
+      # skip_upload_changelogs: true,
+      # validate_only: options[:validate_only] || false,
+      # release_status: 'completed'
     )
   end
 

@@ -30,8 +30,8 @@ class DeployGooglePlayStore(Deploy):
         self.release_notes = release_notes or {"ko": "Bug fixes and improvements"}
 
     def deploy(self):
-        # Logic to deploy the app store
-        print("🚀 Starting App Store deployment...")
+        # Logic to deploy the Google Play Store
+        print("🚀 Starting Google Play Store deployment...")
         print(f"📁 APK or AAB path: {self.file_path}")
 
         build_path = Path(self.file_path)

@@ -61,7 +61,7 @@ Quick upload for development
 [bundle exec] fastlane ios auto_release
 ```
 
-Fully automated release with review submission
+Automated release
 
 ----
 
@@ -75,6 +75,14 @@ Fully automated release with review submission
 ```
 
 Description of what the lane does
+
+### android validate_json_key
+
+```sh
+[bundle exec] fastlane android validate_json_key
+```
+
+Validate Play Store JSON key
 
 ### android build_debug
 
