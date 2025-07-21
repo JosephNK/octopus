@@ -72,11 +72,14 @@ platform :android do
       aab: options[:aab],
       json_key: options[:json_key],
       package_name: options[:package_name],
+      skip_upload_apk: options[:skip_upload_apk] || false,
+      skip_upload_aab: options[:skip_upload_aab] || false,
       skip_upload_metadata: options[:skip_upload_metadata] || true,
       skip_upload_images: options[:skip_upload_images] || true,
       skip_upload_screenshots: options[:skip_upload_screenshots] || true,
-      release_status: options[:release_status] || 'completed',
-      changelogs: CommonHelper.process_release_notes(options)
+      skip_upload_changelogs: options[:skip_upload_changelogs] || true,
+      validate_only: options[:validate_only] || false,
+      release_status: options[:release_status] || 'completed'
     )
   end
 
@@ -92,11 +95,14 @@ platform :android do
       aab: options[:aab],
       json_key: options[:json_key],
       package_name: options[:package_name],
+      skip_upload_apk: options[:skip_upload_apk] || false,
+      skip_upload_aab: options[:skip_upload_aab] || false,
       skip_upload_metadata: options[:skip_upload_metadata] || true,
       skip_upload_images: options[:skip_upload_images] || true,
       skip_upload_screenshots: options[:skip_upload_screenshots] || true,
-      release_status: options[:release_status] || 'completed',
-      changelogs: CommonHelper.process_release_notes(options)
+      skip_upload_changelogs: options[:skip_upload_changelogs] || true,
+      validate_only: options[:validate_only] || false,
+      release_status: options[:release_status] || 'completed'
     )
   end
 
@@ -112,11 +118,14 @@ platform :android do
       aab: options[:aab],
       json_key: options[:json_key],
       package_name: options[:package_name],
+      skip_upload_apk: options[:skip_upload_apk] || false,
+      skip_upload_aab: options[:skip_upload_aab] || false,
       skip_upload_metadata: options[:skip_upload_metadata] || false,
       skip_upload_images: options[:skip_upload_images] || false,
       skip_upload_screenshots: options[:skip_upload_screenshots] || false,
-      release_status: options[:release_status] || 'completed',
-      changelogs: CommonHelper.process_release_notes(options)
+      skip_upload_changelogs: options[:skip_upload_changelogs] || false,
+      validate_only: options[:validate_only] || false,
+      release_status: options[:release_status] || 'completed'
     )
   end
 
@@ -132,11 +141,14 @@ platform :android do
       aab: options[:aab],
       json_key: options[:json_key],
       package_name: options[:package_name],
+      skip_upload_apk: options[:skip_upload_apk] || false,
+      skip_upload_aab: options[:skip_upload_aab] || false,
       skip_upload_metadata: options[:skip_upload_metadata] || false,
       skip_upload_images: options[:skip_upload_images] || false,
       skip_upload_screenshots: options[:skip_upload_screenshots] || false,
-      release_status: options[:release_status] || 'completed',
-      changelogs: CommonHelper.process_release_notes(options)
+      skip_upload_changelogs: options[:skip_upload_changelogs] || false,
+      validate_only: options[:validate_only] || false,
+      release_status: options[:release_status] || 'completed'
     )
   end
 
@@ -152,11 +164,14 @@ platform :android do
       aab: options[:aab],
       json_key: options[:json_key],
       package_name: options[:package_name],
+      skip_upload_apk: options[:skip_upload_apk] || false,
+      skip_upload_aab: options[:skip_upload_aab] || false,
       skip_upload_metadata: true,
       skip_upload_images: true,
       skip_upload_screenshots: true,
-      release_status: 'completed',
-      changelogs: CommonHelper.process_release_notes(options)
+      skip_upload_changelogs: true,
+      validate_only: options[:validate_only] || false,
+      release_status: 'completed'
     )
   end
 
@@ -172,11 +187,14 @@ platform :android do
       aab: options[:aab],
       json_key: options[:json_key],
       package_name: options[:package_name],
+      skip_upload_apk: options[:skip_upload_apk] || false,
+      skip_upload_aab: options[:skip_upload_aab] || false,
       skip_upload_metadata: false,
       skip_upload_images: false,
       skip_upload_screenshots: false,
-      release_status: 'completed',
-      changelogs: CommonHelper.process_release_notes(options)
+      skip_upload_changelogs: false,
+      validate_only: options[:validate_only] || false,
+      release_status: 'completed'
     )
   end
 end

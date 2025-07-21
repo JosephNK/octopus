@@ -4,6 +4,7 @@ from enum import Enum
 
 
 class FastlaneRelease(Enum):
+    BETA = "beta"
     DEV_RELEASE = "dev_release"
     AUTO_RELEASE = "auto_release"
 
