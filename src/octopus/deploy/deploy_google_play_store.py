@@ -46,22 +46,15 @@ class DeployGooglePlayStore(Deploy):
             fastlane_cmd.append(f"aab:{self.file_path}")
         fastlane_cmd.append(f"json_key:{self.json_key_path}")
         fastlane_cmd.append(f"package_name:{self.package_name}")
-        fastlane_cmd.append(
-            f"release_notes:{json.dumps(self.release_notes, ensure_ascii=False)}"
-        )
+        if self.release_notes:
+            fastlane_cmd.append(
+                f"release_notes:{json.dumps(self.release_notes, ensure_ascii=False)}"
+            )
 
         try:
             print("⏳ Running fastlane deployment...")
-            result = subprocess.run(
-                fastlane_cmd,
-                check=True,
-                capture_output=True,
-                text=True,
-            )
+            subprocess.run(fastlane_cmd, check=True, text=True)
             print("✅ Fastlane deployment successful!")
-            if result.stdout:
-                print("📝 Output:")
-                print(result.stdout)
             return True
         except subprocess.CalledProcessError as e:
             print("❌ Fastlane deployment failed!")

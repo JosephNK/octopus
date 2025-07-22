@@ -33,6 +33,15 @@ class DeployAppStore(Deploy):
         print("🚀 Starting App Store deployment...")
         print(f"📁 IPA path: {self.file_path}")
 
+        # Fastlane command to print build info
+        fastlane_cmd_print = [
+            "fastlane",
+            "ios",
+            "print_build_info",
+            f"ipa:{self.file_path}",
+        ]
+        subprocess.run(fastlane_cmd_print, check=True, text=True)
+
         # Fastlane deployment command
         fastlane_cmd = [
             "fastlane",
@@ -42,23 +51,18 @@ class DeployAppStore(Deploy):
             f"api_key_id:{self.api_key_id}",
             f"api_key_issuer_id:{self.api_key_issuer_id}",
             f"api_key_path:{self.api_key_path}",
-            f"release_notes:{json.dumps(self.release_notes, ensure_ascii=False)}",
         ]
+        if self.release_notes:
+            fastlane_cmd.append(
+                f"release_notes:{json.dumps(self.release_notes, ensure_ascii=False)}"
+            )
         if self.groups:
             fastlane_cmd.append(f"groups:{self.groups}")
 
         try:
             print("⏳ Running fastlane deployment...")
-            result = subprocess.run(
-                fastlane_cmd,
-                check=True,
-                capture_output=True,
-                text=True,
-            )
+            subprocess.run(fastlane_cmd, check=True, text=True)
             print("✅ Fastlane deployment successful!")
-            if result.stdout:
-                print("📝 Output:")
-                print(result.stdout)
             return True
         except subprocess.CalledProcessError as e:
             print("❌ Fastlane deployment failed!")

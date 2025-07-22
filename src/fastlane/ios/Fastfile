@@ -61,12 +61,16 @@ platform :ios do
   #   )
   # end
 
+  # Print build information from IPA
+  desc "Print build information from IPA"
+  lane :print_build_info do |options|
+    # IPA 파일에서 빌드 정보 추출하여 로그에 출력
+    CommonHelper.extract_build_info_from_ipa(options)
+  end
+
   # Internal 배포
   desc "Internal release"
   lane :internal_release do |options|
-    # IPA 파일에서 빌드 정보 추출하여 로그에 출력
-    CommonHelper.extract_build_info_from_ipa(options)
-
     # 릴리즈 노트 처리
     CommonHelper.create_ios_metadata_release_notes(options)
 
@@ -93,9 +97,6 @@ platform :ios do
   # Production 배포
   desc "Production release"
   lane :production_release do |options|
-    # IPA 파일에서 빌드 정보 추출하여 로그에 출력
-    CommonHelper.extract_build_info_from_ipa(options)
-
     # 릴리즈 노트 처리
     CommonHelper.create_ios_metadata_release_notes(options)
 
