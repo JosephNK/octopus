@@ -5,6 +5,8 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
+from .git_checkout_manager import GitCheckoutManager
+
 
 class GitManager:
     """Git 저장소를 관리하는 클래스"""
@@ -19,6 +21,7 @@ class GitManager:
         """
         self.repo_url = repo_url
         self.local_path = Path(local_path)
+        self.checkout_manager = GitCheckoutManager(self)
 
     @staticmethod
     def get_repo_name(url):
@@ -212,152 +215,6 @@ class GitManager:
 
         return success
 
-    def _checkout_with_strategy(
-        self, target: str, target_type: str, strategy: str = "fresh"
-    ) -> bool:
-        """
-        공통 체크아웃 로직 (strategy 지원)
-
-        Args:
-            target (str): 체크아웃 대상 (브랜치명, 커밋해시, 태그명)
-            target_type (str): 대상 타입 ("branch", "commit", "tag")
-            strategy (str): 체크아웃 전략
-                - "fresh": 완전 새로 클론 (기존 폴더 삭제 → 클론 → 체크아웃)
-                - "preserve": 기존 저장소 보존 시도 (로컬 정리 → 체크아웃, 불가능하면 새로 클론)
-
-        Returns:
-            bool: Success status
-        """
-        print("=" * 80)
-        emoji_map = {"branch": "🌿", "commit": "📌", "tag": "🏷️"}
-        emoji = emoji_map.get(target_type, "🔀")
-        print(f"🚀 Starting {target_type} checkout: {target}")
-
-        # Strategy 검증
-        if strategy not in ["fresh", "preserve"]:
-            print(f"❌ Invalid strategy: {strategy}. Use 'fresh' or 'preserve'")
-            return False
-
-        if strategy == "preserve":
-            # Strategy 1: 기존 저장소 보존 시도
-            print(
-                "🧹 Using preserve strategy (attempting to keep existing repository)..."
-            )
-
-            # 1. 로컬 경로가 없으면 클론부터 시작
-            if not self.local_path.exists():
-                print(f"ℹ️  Local path does not exist, cloning first: {self.local_path}")
-                if not self.clone_repository():
-                    return False
-
-            # 2. Git 저장소가 아니면 새로 클론
-            elif not self._is_git_repo():
-                print(f"ℹ️  Not a Git repository, removing and cloning fresh...")
-                if not self.remove_directory() or not self.clone_repository():
-                    return False
-
-            # 3. 기존 저장소가 있다면 정리 과정 진행
-            else:
-                print("ℹ️  Existing Git repository found, cleaning up...")
-
-                # Reset local changes
-                print("🔄 Resetting local changes...")
-                if not self.reset_hard():
-                    return False
-
-                # Clean untracked files
-                print("🧹 Cleaning untracked files...")
-                if not self.clean_untracked():
-                    return False
-
-                # Fetch latest changes (브랜치의 경우만)
-                if target_type == "branch":
-                    print("📥 Fetching latest changes...")
-                    fetch_success, fetch_output = self._run_command(
-                        ["git", "fetch"], cwd=str(self.local_path)
-                    )
-                    if not fetch_success:
-                        print(f"❌ Fetch failed: {fetch_output}")
-                        return False
-
-            # 4. 현재 상태 확인 및 체크아웃
-            needs_checkout = True
-
-            if target_type == "branch":
-                current_success, current_branch = self._run_command(
-                    ["git", "branch", "--show-current"], cwd=str(self.local_path)
-                )
-                needs_checkout = not (
-                    current_success and current_branch.strip() == target
-                )
-
-            if needs_checkout:
-                print(f"{emoji} Checking out to {target_type}: {target}")
-
-                # 체크아웃 명령어 구성
-                if target_type == "tag":
-                    command = ["git", "checkout", f"tags/{target}"]
-                else:
-                    command = ["git", "checkout", target]
-
-                success, output = self._run_command(command, cwd=str(self.local_path))
-
-                if not success:
-                    print(f"❌ {target_type.capitalize()} checkout failed: {output}")
-                    return False
-
-                print(
-                    f"{emoji} {target_type.capitalize()} checkout completed: {target}"
-                )
-            else:
-                print(f"ℹ️  Already on {target_type}: {target}, updating to latest...")
-
-            # 5. 최신 변경사항 풀 (브랜치의 경우만)
-            if target_type == "branch" and not needs_checkout:
-                print("📥 Pulling latest changes...")
-                if self.pull_repository():
-                    print("✅ Preserve strategy checkout completed!")
-                    return True
-                else:
-                    print("⚠️  Checkout successful but pull failed")
-                    return True  # Return True since checkout was successful
-            else:
-                print("✅ Preserve strategy checkout completed!")
-                return True
-
-        else:
-            # Strategy 2: Fresh clone (기존 로직)
-            print("🗑️  Using fresh strategy (remove → clone → checkout)...")
-
-            # 1. Remove existing directory
-            if not self.remove_directory():
-                return False
-
-            # 2. Clone fresh
-            if not self.clone_repository():
-                return False
-
-            # 3. Checkout specific target
-            print(f"{emoji} Checking out to {target_type}: {target}")
-
-            # 체크아웃 명령어 구성
-            if target_type == "tag":
-                command = ["git", "checkout", f"tags/{target}"]
-            else:
-                command = ["git", "checkout", target]
-
-            success, output = self._run_command(command, cwd=str(self.local_path))
-
-            if success:
-                print(
-                    f"{emoji} {target_type.capitalize()} checkout completed: {target}"
-                )
-                print("✅ Fresh strategy checkout completed!")
-                return True
-            else:
-                print(f"❌ {target_type.capitalize()} checkout failed: {output}")
-                return False
-
     def checkout_branch(self, branch_name: str, strategy: str = "fresh") -> bool:
         """
         Checkout to specific branch
@@ -371,7 +228,7 @@ class GitManager:
         Returns:
             bool: Success status
         """
-        return self._checkout_with_strategy(branch_name, "branch", strategy)
+        return self.checkout_manager.checkout_branch(branch_name, strategy)
 
     def checkout_commit(self, commit_hash: str, strategy: str = "fresh") -> bool:
         """
@@ -386,11 +243,7 @@ class GitManager:
         Returns:
             bool: Success status
         """
-        if not self._is_git_repo() and strategy == "preserve":
-            print(f"❌ Not a Git repository: {self.local_path}")
-            return False
-
-        return self._checkout_with_strategy(commit_hash, "commit", strategy)
+        return self.checkout_manager.checkout_commit(commit_hash, strategy)
 
     def checkout_tag(self, tag_name: str, strategy: str = "fresh") -> bool:
         """
@@ -405,11 +258,7 @@ class GitManager:
         Returns:
             bool: Success status
         """
-        if not self._is_git_repo() and strategy == "preserve":
-            print(f"❌ Not a Git repository: {self.local_path}")
-            return False
-
-        return self._checkout_with_strategy(tag_name, "tag", strategy)
+        return self.checkout_manager.checkout_tag(tag_name, strategy)
 
     def get_branches(self) -> tuple[bool, list]:
         """
