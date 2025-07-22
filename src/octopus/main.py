@@ -20,6 +20,8 @@ class BuildConfig:
     flavor: Optional[str] = None
     provisioning_profile: Optional[str] = None
     branch: Optional[str] = None
+    commit_hash: Optional[str] = None
+    tag_name: Optional[str] = None
     strategy: Optional[str] = "fresh"
 
 
@@ -34,6 +36,8 @@ class DeployConfig:
     flavor: Optional[str] = None
     provisioning_profile: Optional[str] = None
     branch: Optional[str] = None
+    commit_hash: Optional[str] = None
+    tag_name: Optional[str] = None
     strategy: Optional[str] = "fresh"
 
     # Deployment specific
@@ -62,6 +66,8 @@ class DeployConfig:
             flavor=self.flavor,
             provisioning_profile=self.provisioning_profile,
             branch=self.branch,
+            commit_hash=self.commit_hash,
+            tag_name=self.tag_name,
             strategy=self.strategy,
         )
 
@@ -116,6 +122,16 @@ def command() -> None:
         help="Git branch to checkout (optional, default: main)",
     )
     build_parser.add_argument(
+        "--commit-hash",
+        type=str,
+        help="Git commit hash to checkout (optional)",
+    )
+    build_parser.add_argument(
+        "--tag-name",
+        type=str,
+        help="Git tag name to checkout (optional)",
+    )
+    build_parser.add_argument(
         "--strategy",
         type=str,
         default="fresh",
@@ -160,6 +176,16 @@ def command() -> None:
         "--branch",
         type=str,
         help="Git branch to checkout (optional, default: main)",
+    )
+    deploy_parser.add_argument(
+        "--commit-hash",
+        type=str,
+        help="Git commit hash to checkout (optional)",
+    )
+    deploy_parser.add_argument(
+        "--tag-name",
+        type=str,
+        help="Git tag name to checkout (optional)",
     )
     deploy_parser.add_argument(
         "--strategy",
@@ -233,6 +259,8 @@ def command() -> None:
                 args.provisioning_profile if args.provisioning_profile else None
             ),
             branch=args.branch if args.branch else None,
+            commit_hash=args.commit_hash if args.commit_hash else None,
+            tag_name=args.tag_name if args.tag_name else None,
             strategy=args.strategy,
         )
         result = build(config)
@@ -269,6 +297,8 @@ def command() -> None:
                 args.provisioning_profile if args.provisioning_profile else None
             ),
             branch=args.branch if args.branch else None,
+            commit_hash=args.commit_hash if args.commit_hash else None,
+            tag_name=args.tag_name if args.tag_name else None,
             strategy=args.strategy,
             # Deploy configuration
             build_file_path=args.build_file_path,
@@ -305,10 +335,21 @@ def build(config: BuildConfig) -> Optional[str]:
                 repo_url=config.git_url,
                 local_path=f"./repo/{repo_name}",
             )
-            git_manager.checkout_branch(
-                branch_name=config.branch if config.branch else "main",
-                strategy=config.strategy,
-            )
+            if config.branch:
+                git_manager.checkout_branch(
+                    branch_name=config.branch if config.branch else "main",
+                    strategy=config.strategy,
+                )
+            elif config.commit_hash:
+                git_manager.checkout_commit(
+                    commit_hash=config.commit_hash,
+                    strategy=config.strategy,
+                )
+            elif config.tag_name:
+                git_manager.checkout_tag(
+                    tag_name=config.tag_name,
+                    strategy=config.strategy,
+                )
             git_status = git_manager.get_status()
             local_path = Path(git_status["local_path"])
             if not local_path.exists():
