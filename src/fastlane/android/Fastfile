@@ -67,62 +67,12 @@ platform :android do
     )
   end
 
-  # Internal Testing 배포용
-  desc "Deploy to Google Play Internal Testing"
-  lane :internal do |options|
-    # APK 파일에서 빌드 정보 추출하여 로그에 출력
-    build_info = CommonHelper.extract_build_info_from_apk(options[:apk]) if options[:apk]
 
+  # Internal 배포
+  desc "Internal release"
+  lane :internal_release do |options|
     upload_to_play_store(
       track: 'internal',
-      apk: options[:apk],
-      aab: options[:aab],
-      json_key: options[:json_key],
-      package_name: options[:package_name],
-      skip_upload_apk: options[:skip_upload_apk] || false,
-      skip_upload_aab: options[:skip_upload_aab] || false,
-      skip_upload_metadata: options[:skip_upload_metadata] || true,
-      skip_upload_images: options[:skip_upload_images] || true,
-      skip_upload_screenshots: options[:skip_upload_screenshots] || true,
-      skip_upload_changelogs: true,  # non-interactive mode를 위해 강제로 true
-      validate_only: options[:validate_only] || false,
-      release_status: options[:release_status] || 'completed',
-      timeout: options[:timeout] || 300
-    )
-  end
-
-  # Alpha Testing 배포용
-  desc "Deploy to Google Play Alpha Testing"
-  lane :alpha do |options|
-    # APK 파일에서 빌드 정보 추출하여 로그에 출력
-    build_info = CommonHelper.extract_build_info_from_apk(options[:apk]) if options[:apk]
-
-    upload_to_play_store(
-      track: 'alpha',
-      apk: options[:apk],
-      aab: options[:aab],
-      json_key: options[:json_key],
-      package_name: options[:package_name],
-      skip_upload_apk: options[:skip_upload_apk] || false,
-      skip_upload_aab: options[:skip_upload_aab] || false,
-      skip_upload_metadata: options[:skip_upload_metadata] || true,
-      skip_upload_images: options[:skip_upload_images] || true,
-      skip_upload_screenshots: options[:skip_upload_screenshots] || true,
-      skip_upload_changelogs: true,  # non-interactive mode를 위해 강제로 true
-      validate_only: options[:validate_only] || false,
-      release_status: options[:release_status] || 'completed',
-      timeout: options[:timeout] || 300
-    )
-  end
-
-  # Beta Testing 배포용
-  desc "Deploy to Google Play Beta Testing"
-  lane :beta do |options|
-    # APK 파일에서 빌드 정보 추출하여 로그에 출력
-    build_info = CommonHelper.extract_build_info_from_apk(options[:apk]) if options[:apk]
-
-    upload_to_play_store(
-      track: 'beta',
       apk: options[:apk],
       aab: options[:aab],
       json_key: options[:json_key],
@@ -134,16 +84,13 @@ platform :android do
       skip_upload_screenshots: options[:skip_upload_screenshots] || false,
       skip_upload_changelogs: options[:skip_upload_changelogs] || false,
       validate_only: options[:validate_only] || false,
-      release_status: options[:release_status] || 'completed'
+      release_status: options[:release_status] || 'draft',
     )
   end
 
-  # Production 배포용
-  desc "Deploy to Google Play Store Production"
-  lane :release do |options|
-    # APK 파일에서 빌드 정보 추출하여 로그에 출력
-    build_info = CommonHelper.extract_build_info_from_apk(options[:apk]) if options[:apk]
-
+  # Production 배포
+  desc "Production release"
+  lane :production_release do |options|
     upload_to_play_store(
       track: 'production',
       apk: options[:apk],
@@ -157,58 +104,7 @@ platform :android do
       skip_upload_screenshots: options[:skip_upload_screenshots] || false,
       skip_upload_changelogs: options[:skip_upload_changelogs] || false,
       validate_only: options[:validate_only] || false,
-      release_status: options[:release_status] || 'completed'
-    )
-  end
-
-  # 개발용 빠른 업로드 (Internal Testing)
-  desc "Quick upload for development"
-  lane :dev_release do |options|
-    # APK 파일에서 빌드 정보 추출하여 로그에 출력
-    # build_info = CommonHelper.extract_build_info_from_apk(options[:apk]) if options[:apk]
-
-    upload_to_play_store(
-      track: 'internal',
-      apk: options[:apk],
-      aab: options[:aab],
-      json_key: options[:json_key],
-      package_name: options[:package_name],
-      skip_upload_metadata: true,  
-      skip_upload_images: true,  
-      skip_upload_screenshots: true,  
-      skip_upload_changelogs: true,  
-      skip_upload_apk: true,  
-      # skip_upload_apk: options[:skip_upload_apk] || false,
-      # skip_upload_aab: options[:skip_upload_aab] || false,
-      # skip_upload_metadata: true,
-      # skip_upload_images: true,
-      # skip_upload_screenshots: true,
-      # skip_upload_changelogs: true,
-      # validate_only: options[:validate_only] || false,
-      # release_status: 'completed'
-    )
-  end
-
-  # 완전 자동 배포 (Production)
-  desc "Fully automated release to production"
-  lane :auto_release do |options|
-    # APK 파일에서 빌드 정보 추출하여 로그에 출력
-    build_info = CommonHelper.extract_build_info_from_apk(options[:apk]) if options[:apk]
-
-    upload_to_play_store(
-      track: 'production',
-      apk: options[:apk],
-      aab: options[:aab],
-      json_key: options[:json_key],
-      package_name: options[:package_name],
-      skip_upload_apk: options[:skip_upload_apk] || false,
-      skip_upload_aab: options[:skip_upload_aab] || false,
-      skip_upload_metadata: false,
-      skip_upload_images: false,
-      skip_upload_screenshots: false,
-      skip_upload_changelogs: false,
-      validate_only: options[:validate_only] || false,
-      release_status: 'completed'
+      release_status: options[:release_status] || 'draft',
     )
   end
 end

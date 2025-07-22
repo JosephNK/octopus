@@ -4,14 +4,13 @@ from enum import Enum
 
 
 class FastlaneRelease(Enum):
-    BETA = "beta"
-    DEV_RELEASE = "dev_release"
-    AUTO_RELEASE = "auto_release"
+    INTERNAL_RELEASE = "internal_release"
+    PRODUCTION_RELEASE = "production_release"
 
 
 class Deploy(ABC):
     def __init__(
-        self, lane: FastlaneRelease = FastlaneRelease.DEV_RELEASE, **kwargs
+        self, lane: FastlaneRelease = FastlaneRelease.INTERNAL_RELEASE, **kwargs
     ) -> None:
         self.lane = lane
         self.config = kwargs

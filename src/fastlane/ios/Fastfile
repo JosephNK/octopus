@@ -45,7 +45,7 @@ platform :ios do
 
   # TestFlight 배포용
   desc "Deploy to TestFlight for beta testing"
-  lane :beta do |options| 
+  lane :internal_release do |options| 
     groups = if options[:groups]
              options[:groups].split(',').map(&:strip)
            else
@@ -61,68 +61,11 @@ platform :ios do
     )
   end
 
-  # App Store 배포용
-  desc "Deploy to App Store with specified configuration"
-  lane :release do |options|
-    upload_to_app_store(
-      # 업로드할 IPA 파일 경로
-      ipa: options[:ipa],
-      
-      # App Store Connect API 키 (위에서 설정한 인증 정보)
-      api_key: app_store_connect_api_key(CommonHelper.setup_app_store_api_key(options)),
-      
-      # 메타데이터 업로드 설정
-      # false: 앱 설명, 키워드, 카테고리 등 메타데이터도 함께 업로드
-      # true: 바이너리(IPA)만 업로드, 메타데이터는 건너뛰기
-      skip_metadata: options[:skip_metadata] || false,
-      
-      # 스크린샷 업로드 설정
-      # false: 앱 스크린샷도 함께 업로드
-      # true: 스크린샷 업로드 건너뛰기
-      skip_screenshots: options[:skip_screenshots] || false,
-      
-      # 심사 제출 설정
-      # false: 업로드만 하고 수동으로 나중에 심사 제출
-      # true: 업로드 후 자동으로 Apple 심사에 제출 (되돌릴 수 없음!)
-      submit_for_review: options[:submit_for_review] || false,
-      
-      # 바이너리 업로드 설정
-      # false: IPA 파일을 새로 업로드 (기본값)
-      # true: 바이너리 업로드 건너뛰기, 기존 업로드된 빌드 사용 (TestFlight→App Store 승격 시 사용)
-      skip_binary_upload: options[:skip_binary_upload] || false,
-      
-      # 자동 출시 설정
-      # false: 심사 승인 후 수동으로 출시 (마케팅 타이밍 조절 가능)
-      # true: 심사 승인 즉시 자동으로 App Store에 출시
-      automatic_release: options[:automatic_release] || false,
-
-      # 릴리즈 노트 (What's New / 변경사항) 처리
-      release_notes: CommonHelper.process_release_notes(options),
-      
-      # 인앱 구매 사전 검사 설정
-      # false: 인앱 구매 관련 사전 검사 생략 (일반적)
-      # true: 인앱 구매 메타데이터도 사전 검사 포함
-      precheck_include_in_app_purchases: options[:precheck_include_in_app_purchases] || false,
-      
-      # Non-interactive 모드 설정
-      force: options[:force] || true,
-      skip_app_version_update: options[:skip_app_version_update] || true,
-      
-      # 심사 제출 시 추가 정보
-      submission_information: {
-        # IDFA (광고 식별자) 사용 여부
-        # false: 앱이 IDFA를 사용하지 않음을 Apple에 알림
-        # true: 앱이 IDFA를 사용함을 Apple에 알림 (추가 심사 필요)
-        add_id_info_uses_idfa: options[:add_id_info_uses_idfa] || false
-      }
-    )
-  end
-
-  # 개발용 빠른 업로드
-  desc "Quick upload for development"
-  lane :dev_release do |options|
+  # Internal 배포
+  desc "Internal release"
+  lane :internal_release do |options|
     # IPA 파일에서 빌드 정보 추출하여 로그에 출력
-    build_info = CommonHelper.extract_build_info_from_ipa(options[:ipa])
+    CommonHelper.extract_build_info_from_ipa(options[:ipa])
 
     upload_to_app_store(
       ipa: options[:ipa],
@@ -142,22 +85,20 @@ platform :ios do
     )
   end
 
-  # 자동 배포
-  desc "Automated release"
-  lane :auto_release do |options|
+  # Production 배포
+  desc "Production release"
+  lane :production_release do |options|
     # IPA 파일에서 빌드 정보 추출하여 로그에 출력
-    build_info = CommonHelper.extract_build_info_from_ipa(options[:ipa])
+    CommonHelper.extract_build_info_from_ipa(options[:ipa])
     
     upload_to_app_store(
       ipa: options[:ipa],
       api_key: app_store_connect_api_key(CommonHelper.setup_app_store_api_key(options)),
-      # 메타데이터 오류 방지를 위해 기본적으로 건너뛰기로 변경
       skip_metadata: options[:skip_metadata] || true,
       skip_screenshots: options[:skip_screenshots] || true,
       submit_for_review: options[:submit_for_review] || false,  # 안전을 위해 기본값 false로 변경
       skip_binary_upload: options[:skip_binary_upload] || false,
       automatic_release: options[:automatic_release] || false,  # 안전을 위해 기본값 false로 변경
-      # 메타데이터가 비활성화된 경우 릴리즈 노트 생략
       release_notes: options[:skip_metadata] ? nil : CommonHelper.process_release_notes(options),
       precheck_include_in_app_purchases: false,
       # Non-interactive 모드 및 오류 방지 설정

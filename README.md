@@ -59,9 +59,10 @@ poetry install
 poetry run poe builder build \
   --platform ios \
   --framework flutter \
-  --provisioning-profile com.example.helloworld \
-  --git https://github.com/example/hello_world \
-  --branch main
+  --provisioning-profile com.example.app \
+  --git https://github.com/example/app \
+  --branch main \
+  --strategy preserve
 ```
 
 #### Android Build
@@ -69,8 +70,9 @@ poetry run poe builder build \
 poetry run poe builder build \
   --platform android \
   --framework flutter \
-  --git https://github.com/example/hello_world \
-  --branch main
+  --git https://github.com/example/app \
+  --branch main \
+  --strategy preserve
 ```
 
 ### Deploy Examples (include build)
@@ -80,13 +82,14 @@ poetry run poe builder build \
 poetry run poe builder deploy \
   --platform ios \
   --framework flutter \
-  --git https://github.com/example/hello_world \
+  --git https://github.com/example/app \
   --branch main \
-  --lane dev_release \
-  --provisioning-profile com.example.helloworld \
-  --ios-api-key-id ABCD36BC46 \
+  --strategy fresh \
+  --lane internal_release \
+  --provisioning-profile com.example.app \
+  --ios-api-key-id ABCD11BC11 \
   --ios-api-key-issuer-id xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx \
-  --ios-api-key-path AuthKey_ABCD36BC46.p8 \
+  --ios-api-key-path AuthKey_ABCD11BC11.p8 \
   --ios-skip-binary-upload false \
   --release-notes '{"ko":"Bug fixes and improvements"}'
 ```
@@ -96,11 +99,12 @@ poetry run poe builder deploy \
 poetry run poe builder deploy \
   --platform android \
   --framework flutter \
-  --git https://github.com/example/hello_world \
+  --git https://github.com/example/app \
   --branch main \
-  --lane dev_release \
-  --android-json-key-path json_key.json \
-  --android-package-name com.example.helloworld \
+  --strategy fresh \
+  --lane internal_release \
+  --android-json-key-path abc490dd684c.json \
+  --android-package-name com.example.app \
   --android-skip-upload-aab false \
   --android-validate-only true \
   --release-notes '{"ko":"Bug fixes and improvements"}'

@@ -20,6 +20,7 @@ class BuildConfig:
     flavor: Optional[str] = None
     provisioning_profile: Optional[str] = None
     branch: Optional[str] = None
+    strategy: Optional[str] = "fresh"
 
 
 @dataclass
@@ -33,6 +34,7 @@ class DeployConfig:
     flavor: Optional[str] = None
     provisioning_profile: Optional[str] = None
     branch: Optional[str] = None
+    strategy: Optional[str] = "fresh"
 
     # Deployment specific
     build_file_path: Optional[str] = None
@@ -67,6 +69,7 @@ class DeployConfig:
             flavor=self.flavor,
             provisioning_profile=self.provisioning_profile,
             branch=self.branch,
+            strategy=self.strategy,
         )
 
 
@@ -119,6 +122,12 @@ def command() -> None:
         type=str,
         help="Git branch to checkout (optional, default: main)",
     )
+    build_parser.add_argument(
+        "--strategy",
+        type=str,
+        default="fresh",
+        help="Git clone to strategy (optional, default: fresh)",
+    )
 
     # Deploy command
     deploy_parser = subparsers.add_parser("deploy", help="Deploy the application")
@@ -158,6 +167,12 @@ def command() -> None:
         "--branch",
         type=str,
         help="Git branch to checkout (optional, default: main)",
+    )
+    deploy_parser.add_argument(
+        "--strategy",
+        type=str,
+        default="fresh",
+        help="Git clone to strategy (optional, default: fresh)",
     )
 
     # Common parameters for both iOS and Android
@@ -249,6 +264,7 @@ def command() -> None:
                 args.provisioning_profile if args.provisioning_profile else None
             ),
             branch=args.branch if args.branch else None,
+            strategy=args.strategy,
         )
         result = build(config)
         if result:
@@ -269,8 +285,8 @@ def command() -> None:
                 return
 
         lane_mapping = {
-            "dev_release": FastlaneRelease.DEV_RELEASE,
-            "auto_release": FastlaneRelease.AUTO_RELEASE,
+            "internal_release": FastlaneRelease.INTERNAL_RELEASE,
+            "production_release": FastlaneRelease.PRODUCTION_RELEASE,
         }
         lane = lane_mapping[args.lane]
 
@@ -284,6 +300,7 @@ def command() -> None:
                 args.provisioning_profile if args.provisioning_profile else None
             ),
             branch=args.branch if args.branch else None,
+            strategy=args.strategy,
             # Deploy configuration
             build_file_path=args.build_file_path,
             lane=lane,
@@ -325,7 +342,7 @@ def build(config: BuildConfig) -> Optional[str]:
             )
             git_manager.checkout_branch(
                 branch_name=config.branch if config.branch else "main",
-                strategy="preserve",
+                strategy=config.strategy,
             )
             git_status = git_manager.get_status()
             local_path = Path(git_status["local_path"])
@@ -365,8 +382,6 @@ def build(config: BuildConfig) -> Optional[str]:
             output_file_path = builder.build()
             if not output_file_path:
                 raise ValueError(f"❌ Build failed.")
-
-            print(f"Output file: {output_file_path}")
 
             return str(output_file_path)
     except Exception as e:
