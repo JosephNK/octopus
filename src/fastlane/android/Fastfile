@@ -71,6 +71,9 @@ platform :android do
   # Internal 배포
   desc "Internal release"
   lane :internal_release do |options|
+    # 릴리즈 노트 처리
+    CommonHelper.create_android_metadata_changelogs(options)
+    
     upload_to_play_store(
       track: 'internal',
       apk: options[:apk],
@@ -91,6 +94,9 @@ platform :android do
   # Production 배포
   desc "Production release"
   lane :production_release do |options|
+    # 릴리즈 노트 처리
+    CommonHelper.create_android_metadata_changelogs(options)
+
     upload_to_play_store(
       track: 'production',
       apk: options[:apk],

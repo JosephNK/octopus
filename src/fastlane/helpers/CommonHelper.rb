@@ -11,10 +11,10 @@ module CommonHelper
     }
   end
 
-  def self.extract_build_info_from_ipa(ipa_path)
+  def self.extract_build_info_from_ipa(options)
     # IPA 파일에서 빌드 정보 추출하여 로그에 출력
-    return unless ipa_path && File.exist?(ipa_path)
-    
+    return unless options[:ipa] && File.exist?(options[:ipa])
+
     Fastlane::UI.message "📱 Extracting build information from IPA..."
     
     begin
@@ -24,8 +24,8 @@ module CommonHelper
       
       Dir.mktmpdir do |temp_dir|
         # IPA 압축 해제
-        system("unzip -q '#{ipa_path}' -d '#{temp_dir}'")
-        
+        system("unzip -q '#{options[:ipa]}' -d '#{temp_dir}'")
+
         # Info.plist 파일 찾기
         info_plist_path = Dir.glob("#{temp_dir}/Payload/*/Info.plist").first
         
@@ -65,52 +65,6 @@ module CommonHelper
       end
     rescue => e
       Fastlane::UI.message "⚠️  Could not extract build info from IPA: #{e.message}"
-      nil
-    end
-  end
-
-  def self.extract_build_info_from_apk(apk_path)
-    # APK 파일에서 빌드 정보 추출하여 로그에 출력
-    return unless apk_path && File.exist?(apk_path)
-    
-    Fastlane::UI.message "📱 Extracting build information from APK..."
-    
-    begin
-      # aapt를 사용해서 APK에서 정보 추출
-      output = `aapt dump badging '#{apk_path}' 2>/dev/null`
-      
-      if $?.success? && !output.empty?
-        # package 정보 추출
-        package_match = output.match(/package: name='([^']+)'.*versionCode='([^']+)'.*versionName='([^']+)'/)
-        
-        if package_match
-          package_name = package_match[1]
-          version_code = package_match[2]
-          version_name = package_match[3]
-          
-          Fastlane::UI.important "🔍 Build Information:"
-          Fastlane::UI.message "   📦 Package Name: #{package_name}"
-          Fastlane::UI.message "   📱 App Version: #{version_name}"
-          Fastlane::UI.message "   🔢 Version Code: #{version_code}"
-          Fastlane::UI.message "   📝 Full Version: #{version_name} (#{version_code})"
-          
-          # 빌드 정보를 해시로 반환
-          {
-            package_name: package_name,
-            version_name: version_name,
-            version_code: version_code,
-            full_version: "#{version_name} (#{version_code})"
-          }
-        else
-          Fastlane::UI.message "⚠️  Could not parse package info from APK"
-          nil
-        end
-      else
-        Fastlane::UI.message "⚠️  Could not read APK file with aapt"
-        nil
-      end
-    rescue => e
-      Fastlane::UI.message "⚠️  Could not extract build info from APK: #{e.message}"
       nil
     end
   end
@@ -161,5 +115,172 @@ module CommonHelper
       notes = options[:release_notes] || "Bug fixes and improvements"
       notes.gsub('\\n', "\n")
     end
+  end
+    
+  # Android metadata changelogs 폴더 생성 및 릴리즈 노트 파일 작성
+  def self.create_android_metadata_changelogs(options)
+    return unless options[:release_notes]
+    
+    Fastlane::UI.message "📝 Processing release notes..."
+    Fastlane::UI.message "📝 Release notes data: #{options[:release_notes]} (#{options[:release_notes].class})"
+    
+    # JSON 문자열인 경우 파싱
+    release_notes_data = options[:release_notes]
+    if release_notes_data.is_a?(String)
+      require 'json'
+      release_notes_data = JSON.parse(release_notes_data)
+    end
+    
+    # 버전 코드 가져오기
+    version_code = "default"
+    
+    # metadata/android 폴더 생성
+    metadata_dir = File.join(Dir.pwd, "metadata", "android")
+    system("mkdir -p '#{metadata_dir}'")
+    
+    # 각 언어별로 폴더 생성 및 릴리즈 노트 파일 작성
+    release_notes_data.each do |lang, note|
+      # Android Play Store 언어 코드 매핑
+      android_lang_code = map_to_android_language_code(lang.to_s)
+      
+      # metadata/android/{언어}/changelogs 폴더 생성
+      changelogs_dir = File.join(metadata_dir, android_lang_code, "changelogs")
+      system("mkdir -p '#{changelogs_dir}'")
+      
+      # 버전코드.txt 파일 생성
+      release_note_file = File.join(changelogs_dir, "#{version_code}.txt")
+      File.write(release_note_file, note)
+      
+      Fastlane::UI.success "✅ Created release note: #{release_note_file}"
+      Fastlane::UI.message "   Content: #{note}"
+    end
+  end
+
+  # iOS metadata release_notes.txt 파일 생성
+  def self.create_ios_metadata_release_notes(options)
+    return unless options[:release_notes]
+    
+    Fastlane::UI.message "📝 Processing iOS release notes..."
+    Fastlane::UI.message "📝 Release notes data: #{options[:release_notes]} (#{options[:release_notes].class})"
+    
+    # JSON 문자열인 경우 파싱
+    release_notes_data = options[:release_notes]
+    if release_notes_data.is_a?(String)
+      require 'json'
+      release_notes_data = JSON.parse(release_notes_data)
+    end
+    
+    # metadata 폴더 생성 (ios 하위폴더 없이)
+    metadata_dir = File.join(Dir.pwd, "metadata")
+    system("mkdir -p '#{metadata_dir}'")
+    
+    # 각 언어별로 폴더 생성 및 릴리즈 노트 파일 작성
+    release_notes_data.each do |lang, note|
+      # iOS App Store Connect 언어 코드 매핑
+      ios_lang_code = map_to_ios_language_code(lang.to_s)
+      
+      # metadata/{언어} 폴더 생성
+      lang_dir = File.join(metadata_dir, ios_lang_code)
+      system("mkdir -p '#{lang_dir}'")
+      
+      # release_notes.txt 파일 생성
+      release_note_file = File.join(lang_dir, "release_notes.txt")
+      File.write(release_note_file, note)
+      
+      Fastlane::UI.success "✅ Created iOS release note: #{release_note_file}"
+      Fastlane::UI.message "   Content: #{note}"
+    end
+  end
+  
+  # Android Play Store 언어 코드 매핑
+  def self.map_to_android_language_code(lang)
+    language_map = {
+      'ko' => 'ko-KR',
+      'en' => 'en-US',
+      'ja' => 'ja-JP',
+      'zh' => 'zh-CN',
+      'zh-hans' => 'zh-CN',
+      'zh-hant' => 'zh-TW',
+      'es' => 'es-ES',
+      'fr' => 'fr-FR',
+      'de' => 'de-DE',
+      'it' => 'it-IT',
+      'pt' => 'pt-BR',
+      'ru' => 'ru-RU',
+      'ar' => 'ar-SA',
+      'hi' => 'hi-IN',
+      'th' => 'th-TH',
+      'vi' => 'vi-VN',
+      'tr' => 'tr-TR',
+      'pl' => 'pl-PL',
+      'nl' => 'nl-NL',
+      'sv' => 'sv-SE',
+      'da' => 'da-DK',
+      'fi' => 'fi-FI',
+      'no' => 'nb-NO',
+      'cs' => 'cs-CZ',
+      'sk' => 'sk-SK',
+      'hu' => 'hu-HU',
+      'ro' => 'ro-RO',
+      'hr' => 'hr-HR',
+      'uk' => 'uk-UA',
+      'he' => 'he-IL',
+      'el' => 'el-GR',
+      'ca' => 'ca-ES',
+      'id' => 'id-ID',
+      'ms' => 'ms-MY'
+    }
+    
+    # 매핑된 언어 코드가 있으면 사용, 없으면 원본 사용
+    language_map[lang.downcase] || lang
+  end
+  
+  # iOS App Store Connect 언어 코드 매핑
+  def self.map_to_ios_language_code(lang)
+    language_map = {
+      'ko' => 'ko',
+      'en' => 'en-US',
+      'ja' => 'ja',
+      'zh' => 'zh-Hans',
+      'zh-hans' => 'zh-Hans',
+      'zh-hant' => 'zh-Hant',
+      'es' => 'es-ES',
+      'fr' => 'fr-FR',
+      'de' => 'de-DE',
+      'it' => 'it',
+      'pt' => 'pt-BR',
+      'pt-pt' => 'pt-PT',
+      'ru' => 'ru',
+      'ar' => 'ar-SA',
+      'hi' => 'hi',
+      'th' => 'th',
+      'vi' => 'vi',
+      'tr' => 'tr',
+      'pl' => 'pl',
+      'nl' => 'nl-NL',
+      'sv' => 'sv',
+      'da' => 'da',
+      'fi' => 'fi',
+      'no' => 'no',
+      'cs' => 'cs',
+      'sk' => 'sk',
+      'hu' => 'hu',
+      'ro' => 'ro',
+      'hr' => 'hr',
+      'uk' => 'uk',
+      'he' => 'he',
+      'el' => 'el',
+      'ca' => 'ca',
+      'id' => 'id',
+      'ms' => 'ms',
+      'en-au' => 'en-AU',
+      'en-ca' => 'en-CA',
+      'en-gb' => 'en-GB',
+      'es-mx' => 'es-MX',
+      'fr-ca' => 'fr-CA'
+    }
+    
+    # 매핑된 언어 코드가 있으면 사용, 없으면 원본 사용
+    language_map[lang.downcase] || lang
   end
 end

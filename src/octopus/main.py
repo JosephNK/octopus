@@ -186,7 +186,7 @@ def command() -> None:
         type=str,
         required=True,
         help="Fastlane lane to use",
-        choices=["dev_release", "auto_release"],
+        choices=["internal_release", "production_release"],
     )
     deploy_parser.add_argument(
         "--release-notes",

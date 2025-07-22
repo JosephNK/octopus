@@ -31,37 +31,21 @@ Description of what the lane does
 
 Export IPA with provisioning
 
-### ios beta
+### ios internal_release
 
 ```sh
-[bundle exec] fastlane ios beta
+[bundle exec] fastlane ios internal_release
 ```
 
-Deploy to TestFlight for beta testing
+Internal release
 
-### ios release
+### ios production_release
 
 ```sh
-[bundle exec] fastlane ios release
+[bundle exec] fastlane ios production_release
 ```
 
-Deploy to App Store with specified configuration
-
-### ios dev_release
-
-```sh
-[bundle exec] fastlane ios dev_release
-```
-
-Quick upload for development
-
-### ios auto_release
-
-```sh
-[bundle exec] fastlane ios auto_release
-```
-
-Automated release
+Production release
 
 ----
 
@@ -108,53 +92,21 @@ Build APK for release
 
 Build AAB for Play Store
 
-### android internal
+### android internal_release
 
 ```sh
-[bundle exec] fastlane android internal
+[bundle exec] fastlane android internal_release
 ```
 
-Deploy to Google Play Internal Testing
+Internal release
 
-### android alpha
+### android production_release
 
 ```sh
-[bundle exec] fastlane android alpha
+[bundle exec] fastlane android production_release
 ```
 
-Deploy to Google Play Alpha Testing
-
-### android beta
-
-```sh
-[bundle exec] fastlane android beta
-```
-
-Deploy to Google Play Beta Testing
-
-### android release
-
-```sh
-[bundle exec] fastlane android release
-```
-
-Deploy to Google Play Store Production
-
-### android dev_release
-
-```sh
-[bundle exec] fastlane android dev_release
-```
-
-Quick upload for development
-
-### android auto_release
-
-```sh
-[bundle exec] fastlane android auto_release
-```
-
-Fully automated release to production
+Production release
 
 ----
 

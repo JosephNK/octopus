@@ -1,3 +1,4 @@
+import json
 import subprocess
 
 from pathlib import Path
@@ -44,7 +45,6 @@ class DeployGooglePlayStore(Deploy):
             "fastlane",
             "android",
             self.lane.value,
-            # f"release_notes:{json.dumps(self.release_notes, ensure_ascii=False)}",
         ]
         if file_ext == ".apk":
             fastlane_cmd.append(f"apk:{self.file_path}")
@@ -55,6 +55,9 @@ class DeployGooglePlayStore(Deploy):
         fastlane_cmd.append(f"skip_upload_apk:{str(self.skip_upload_apk).lower()}")
         fastlane_cmd.append(f"skip_upload_aab:{str(self.skip_upload_aab).lower()}")
         fastlane_cmd.append(f"validate_only:{str(self.validate_only).lower()}")
+        fastlane_cmd.append(
+            f"release_notes:{json.dumps(self.release_notes, ensure_ascii=False)}"
+        )
 
         try:
             print("⏳ Running fastlane deployment...")

@@ -43,44 +43,49 @@ platform :ios do
     )
   end
 
-  # TestFlight 배포용
-  desc "Deploy to TestFlight for beta testing"
-  lane :internal_release do |options| 
-    groups = if options[:groups]
-             options[:groups].split(',').map(&:strip)
-           else
-             ["App Store Connect Users"]
-           end
+  # # TestFlight 배포용
+  # desc "Deploy to TestFlight for beta testing"
+  # lane :internal_release do |options| 
+  #   groups = if options[:groups]
+  #            options[:groups].split(',').map(&:strip)
+  #          else
+  #            ["App Store Connect Users"]
+  #          end
 
-    upload_to_testflight(
-      ipa: options[:ipa],
-      api_key: app_store_connect_api_key(CommonHelper.setup_app_store_api_key(options)),
-      skip_waiting_for_build_processing: options[:skip_waiting_for_build_processing] || false,
-      groups: groups,
-      changelog: options[:changelog] || "Bug fixes and improvements"
-    )
-  end
+  #   upload_to_testflight(
+  #     ipa: options[:ipa],
+  #     api_key: app_store_connect_api_key(CommonHelper.setup_app_store_api_key(options)),
+  #     skip_waiting_for_build_processing: options[:skip_waiting_for_build_processing] || false,
+  #     groups: groups,
+  #     changelog: options[:changelog] || "Bug fixes and improvements"
+  #   )
+  # end
 
   # Internal 배포
   desc "Internal release"
   lane :internal_release do |options|
     # IPA 파일에서 빌드 정보 추출하여 로그에 출력
-    CommonHelper.extract_build_info_from_ipa(options[:ipa])
+    CommonHelper.extract_build_info_from_ipa(options)
+
+    # 릴리즈 노트 처리
+    CommonHelper.create_ios_metadata_release_notes(options)
+
+    # App Store Connect API 키 설정
+    api_key = app_store_connect_api_key(CommonHelper.setup_app_store_api_key(options))
 
     upload_to_app_store(
       ipa: options[:ipa],
-      api_key: app_store_connect_api_key(CommonHelper.setup_app_store_api_key(options)),
-      skip_metadata: true,
-      skip_screenshots: true,
-      submit_for_review: false,
+      api_key: api_key,
+      skip_metadata: options[:skip_metadata] || false,
+      skip_screenshots: options[:skip_screenshots] || false,
+      submit_for_review: options[:submit_for_review] || false,
       skip_binary_upload: options[:skip_binary_upload] || false,
-      automatic_release: false,
-      release_notes: CommonHelper.process_release_notes(options),
-      precheck_include_in_app_purchases: false,
+      automatic_release: options[:automatic_release] || false,
+      skip_app_version_update: options[:skip_app_version_update] || false,
+      precheck_include_in_app_purchases: options[:precheck_include_in_app_purchases] || false,
       force: options[:force] || true,
-      skip_app_version_update: options[:skip_app_version_update] || true,
       submission_information: {
-        add_id_info_uses_idfa: false
+        add_id_info_uses_idfa: options[:add_id_info_uses_idfa] || false
       }
     )
   end
@@ -89,23 +94,25 @@ platform :ios do
   desc "Production release"
   lane :production_release do |options|
     # IPA 파일에서 빌드 정보 추출하여 로그에 출력
-    CommonHelper.extract_build_info_from_ipa(options[:ipa])
-    
+    CommonHelper.extract_build_info_from_ipa(options)
+
+    # 릴리즈 노트 처리
+    CommonHelper.create_ios_metadata_release_notes(options)
+
+    # App Store Connect API 키 설정
+    api_key = app_store_connect_api_key(CommonHelper.setup_app_store_api_key(options))
+
     upload_to_app_store(
       ipa: options[:ipa],
-      api_key: app_store_connect_api_key(CommonHelper.setup_app_store_api_key(options)),
-      skip_metadata: options[:skip_metadata] || true,
-      skip_screenshots: options[:skip_screenshots] || true,
-      submit_for_review: options[:submit_for_review] || false,  # 안전을 위해 기본값 false로 변경
+      api_key: api_key,
+      skip_metadata: options[:skip_metadata] || false,
+      skip_screenshots: options[:skip_screenshots] || false,
+      submit_for_review: options[:submit_for_review] || false,
       skip_binary_upload: options[:skip_binary_upload] || false,
-      automatic_release: options[:automatic_release] || false,  # 안전을 위해 기본값 false로 변경
-      release_notes: options[:skip_metadata] ? nil : CommonHelper.process_release_notes(options),
-      precheck_include_in_app_purchases: false,
-      # Non-interactive 모드 및 오류 방지 설정
+      automatic_release: options[:automatic_release] || false,
+      skip_app_version_update: options[:skip_app_version_update] || false,
+      precheck_include_in_app_purchases: options[:precheck_include_in_app_purchases] || false,
       force: options[:force] || true,
-      skip_app_version_update: options[:skip_app_version_update] || true,
-      overwrite_screenshots: options[:overwrite_screenshots] || false,
-      sync_screenshots: options[:sync_screenshots] || false,
       submission_information: {
         add_id_info_uses_idfa: options[:add_id_info_uses_idfa] || false
       }
