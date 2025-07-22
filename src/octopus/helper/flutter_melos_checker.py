@@ -1,5 +1,6 @@
 import os
 import subprocess
+import time
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -28,6 +29,29 @@ class FlutterMelosChecker:
             if (self.project_path / filename).exists():
                 return True
         return False
+
+    def _should_retry_and_wait(
+        self, attempt: int, max_retries: int, error_msg: str
+    ) -> bool:
+        """
+        Check if should retry and wait if needed
+
+        Args:
+            attempt (int): Current attempt number (0-based)
+            max_retries (int): Maximum retry attempts
+            error_msg (str): Error message to display
+
+        Returns:
+            bool: True if should retry, False if should stop
+        """
+        if attempt < max_retries - 1:
+            print(f"{error_msg}\n⏳ Retrying in 2 seconds...")
+            time.sleep(2)
+            return True
+        else:
+            final_msg = f"{error_msg}\n💥 Failed after {max_retries} attempts"
+            print(final_msg)
+            return False
 
     def run_melos_bootstrap(
         self, verbose: bool = False, max_retries: int = 3
@@ -90,40 +114,19 @@ class FlutterMelosChecker:
                     if result.stderr:
                         error_msg += f"\n🔥 Error:\n{result.stderr}"
 
-                    if attempt < max_retries - 1:
-                        print(f"{error_msg}\n⏳ Retrying in 2 seconds...")
-                        import time
-
-                        time.sleep(2)
-                    else:
-                        error_msg += f"\n💥 Failed after {max_retries} attempts"
-                        print(error_msg)
+                    if not self._should_retry_and_wait(attempt, max_retries, error_msg):
                         return False, error_msg
 
             except subprocess.TimeoutExpired:
                 timeout_msg = f"⏰ Melos bootstrap timed out after 5 minutes (attempt {attempt + 1})"
-                if attempt < max_retries - 1:
-                    print(f"{timeout_msg}\n⏳ Retrying in 2 seconds...")
-                    import time
-
-                    time.sleep(2)
-                else:
-                    timeout_msg += f"\n💥 Failed after {max_retries} attempts"
-                    print(timeout_msg)
+                if not self._should_retry_and_wait(attempt, max_retries, timeout_msg):
                     return False, timeout_msg
 
             except Exception as e:
                 error_msg = (
                     f"❌ Unexpected error occurred: {str(e)} (attempt {attempt + 1})"
                 )
-                if attempt < max_retries - 1:
-                    print(f"{error_msg}\n⏳ Retrying in 2 seconds...")
-                    import time
-
-                    time.sleep(2)
-                else:
-                    error_msg += f"\n💥 Failed after {max_retries} attempts"
-                    print(error_msg)
+                if not self._should_retry_and_wait(attempt, max_retries, error_msg):
                     return False, error_msg
 
         # This should never be reached, but just in case
