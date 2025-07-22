@@ -44,19 +44,12 @@ class DeployConfig:
     ios_api_key_id: Optional[str] = None
     ios_api_key_issuer_id: Optional[str] = None
     ios_api_key_path: Optional[str] = None
-    ios_skip_binary_upload: bool = (
-        False  # iOS specific: skip binary upload to App Store Connect
-    )
     ios_groups: Optional[str] = None  # iOS specific: groups to deploy to
 
     # Android specific parameters
     android_json_key_path: Optional[str] = None
     android_package_name: Optional[str] = None
-    android_skip_upload_apk: bool = False  # Android specific: skip APK upload
-    android_skip_upload_aab: bool = False  # Android specific: skip AAB upload
-    android_validate_only: bool = (
-        False  # Android specific: only validate, don't publish
-    )
+
     # Common parameters
     release_notes: Optional[Dict[str, str]] = None
 
@@ -211,12 +204,6 @@ def command() -> None:
         help="iOS App Store Connect API Key file path (required for iOS)",
     )
     deploy_parser.add_argument(
-        "--ios-skip-binary-upload",
-        type=lambda x: x.lower() == "true",
-        default=False,
-        help="iOS Skip binary upload (true/false, default: false)",
-    )
-    deploy_parser.add_argument(
         "--ios-groups",
         type=str,
         help="iOS groups to deploy to (optional)",
@@ -232,24 +219,6 @@ def command() -> None:
         "--android-package-name",
         type=str,
         help="Android package name (required for Android)",
-    )
-    deploy_parser.add_argument(
-        "--android-skip-upload-apk",
-        type=lambda x: x.lower() == "true",
-        default=False,
-        help="Android APK Skip binary upload (true/false, default: false)",
-    )
-    deploy_parser.add_argument(
-        "--android-skip-upload-aab",
-        type=lambda x: x.lower() == "true",
-        default=False,
-        help="Android AAB Skip binary upload (true/false, default: false)",
-    )
-    deploy_parser.add_argument(
-        "--android-validate-only",
-        type=lambda x: x.lower() == "true",
-        default=False,
-        help="Android Validate only (true/false, default: false)",
     )
 
     args = parser.parse_args()
@@ -308,13 +277,9 @@ def command() -> None:
             ios_api_key_id=args.ios_api_key_id,
             ios_api_key_issuer_id=args.ios_api_key_issuer_id,
             ios_api_key_path=args.ios_api_key_path,
-            ios_skip_binary_upload=args.ios_skip_binary_upload,
             ios_groups=args.ios_groups,
             android_json_key_path=args.android_json_key_path,
             android_package_name=args.android_package_name,
-            android_skip_upload_apk=args.android_skip_upload_apk,
-            android_skip_upload_aab=args.android_skip_upload_aab,
-            android_validate_only=args.android_validate_only,
         )
         result = deployment(config)
         if result:
@@ -422,7 +387,6 @@ def deployment(config: DeployConfig) -> Optional[bool]:
                 api_key_id=config.ios_api_key_id,
                 api_key_issuer_id=config.ios_api_key_issuer_id,
                 api_key_path=config.ios_api_key_path,
-                skip_binary_upload=config.ios_skip_binary_upload,
                 groups=config.ios_groups,
                 release_notes=config.release_notes,
             )
@@ -438,9 +402,6 @@ def deployment(config: DeployConfig) -> Optional[bool]:
                 file_path=str(build_path),
                 json_key_path=config.android_json_key_path,
                 package_name=config.android_package_name,
-                skip_upload_apk=config.android_skip_upload_apk,
-                skip_upload_aab=config.android_skip_upload_aab,
-                validate_only=config.android_validate_only,
                 release_notes=config.release_notes,
             )
 

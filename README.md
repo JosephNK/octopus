@@ -90,7 +90,6 @@ poetry run poe builder deploy \
   --ios-api-key-id ABCD11BC11 \
   --ios-api-key-issuer-id xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx \
   --ios-api-key-path AuthKey_ABCD11BC11.p8 \
-  --ios-skip-binary-upload false \
   --release-notes '{"ko":"Bug fixes and improvements"}'
 ```
 
@@ -105,8 +104,6 @@ poetry run poe builder deploy \
   --lane internal_release \
   --android-json-key-path abc490dd684c.json \
   --android-package-name com.example.app \
-  --android-skip-upload-aab false \
-  --android-validate-only true \
   --release-notes '{"ko":"Bug fixes and improvements"}'
 ```
 

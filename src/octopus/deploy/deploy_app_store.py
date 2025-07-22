@@ -12,7 +12,6 @@ class DeployAppStore(Deploy):
         api_key_id: str,
         api_key_issuer_id: str,
         api_key_path: str,
-        skip_binary_upload: bool = False,
         groups: Optional[str] = None,
         release_notes: Dict[str, str] = None,
     ):
@@ -24,7 +23,6 @@ class DeployAppStore(Deploy):
         self.api_key_id = api_key_id
         self.api_key_issuer_id = api_key_issuer_id
         self.api_key_path = api_key_path
-        self.skip_binary_upload = skip_binary_upload
         self.groups = groups
         self.release_notes = release_notes or {"ko": "Bug fixes and improvements"}
 
@@ -44,7 +42,6 @@ class DeployAppStore(Deploy):
             f"api_key_id:{self.api_key_id}",
             f"api_key_issuer_id:{self.api_key_issuer_id}",
             f"api_key_path:{self.api_key_path}",
-            f"skip_binary_upload:{str(self.skip_binary_upload).lower()}",
             f"release_notes:{json.dumps(self.release_notes, ensure_ascii=False)}",
         ]
         if self.groups:

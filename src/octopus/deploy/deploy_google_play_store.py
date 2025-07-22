@@ -13,9 +13,6 @@ class DeployGooglePlayStore(Deploy):
         file_path: str,
         json_key_path: str,
         package_name: str,
-        skip_upload_apk: bool = False,
-        skip_upload_aab: bool = False,
-        validate_only: bool = False,
         release_notes: Dict[str, str] = None,
     ):
         # Pass all parameters to parent class
@@ -25,9 +22,6 @@ class DeployGooglePlayStore(Deploy):
         self.file_path = file_path
         self.json_key_path = json_key_path
         self.package_name = package_name
-        self.skip_upload_apk = skip_upload_apk
-        self.skip_upload_aab = skip_upload_aab
-        self.validate_only = validate_only
         self.release_notes = release_notes or {"ko": "Bug fixes and improvements"}
 
     def deploy(self):
@@ -52,9 +46,6 @@ class DeployGooglePlayStore(Deploy):
             fastlane_cmd.append(f"aab:{self.file_path}")
         fastlane_cmd.append(f"json_key:{self.json_key_path}")
         fastlane_cmd.append(f"package_name:{self.package_name}")
-        fastlane_cmd.append(f"skip_upload_apk:{str(self.skip_upload_apk).lower()}")
-        fastlane_cmd.append(f"skip_upload_aab:{str(self.skip_upload_aab).lower()}")
-        fastlane_cmd.append(f"validate_only:{str(self.validate_only).lower()}")
         fastlane_cmd.append(
             f"release_notes:{json.dumps(self.release_notes, ensure_ascii=False)}"
         )
